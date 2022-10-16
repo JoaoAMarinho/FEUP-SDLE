@@ -1,6 +1,7 @@
 use clap::Parser;
 mod server;
 mod broker;
+mod client;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about=None)]

@@ -1,7 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
-const BROKER_ADDRESS: &str = "tcp://localhost:5560";
+const BROKER_ADDRESS: &str = "tcp://localhost:5555";
 
 pub fn put(topic_arg: Option<String>, message_arg: Option<String>) {
     if topic_arg == None || message_arg == None {
