@@ -149,14 +149,3 @@ pub fn start_storage(context: &zmq::Context, mut storage: Storage) {
         worker.send(&response, 0).unwrap();
     }
 }
-
-// fn get(client_id: String, topic: String) {
-//     println!("[GET] Get topic {} from client {}", topic, client_id);
-
-// }
-
-// fn unsub(client_id: String, topic: String) {
-//     println!("[UNSUB] Client {} unsubscribed topic {}", client_id, topic);
-
-//     let message = format!("UNSUB {} {}", client_id, topic);
-// }
