@@ -4,7 +4,50 @@ use std::fs::File;
 use std::time;
 use std::thread;
 use threadpool::ThreadPool;
+use std::time::Duration;
 
+
+
+fn worker_routine(context: &zmq::Context) {
+    let receiver = context.socket(zmq::REP).unwrap();
+    receiver
+        .connect("inproc://workers")
+        .expect("failed to connect worker");
+
+    let receive_knowledge = context.socket(zmq::REQ).unwrap();
+        receive_knowledge
+            .connect("inproc://getKnowledge")
+            .expect("failed to connect worker");
+    loop {
+        let msg = receiver
+            .recv_string(0)
+            .expect("worker failed receiving")
+            .unwrap();
+        println!("Thread received, {}", msg.as_str());
+        thread::sleep(Duration::from_millis(1000));
+        receive_knowledge.send("Hello", 0).unwrap();
+        println!("Thread send, Hello");
+        let msg = receive_knowledge.recv_string(0).expect("ok").unwrap();
+        receiver.send(msg.as_str(), 0).unwrap();
+    }
+}
+
+fn knowledge_worker(context: &zmq::Context, x: String) {
+    println!("I have knowledge, {}", x);
+    let receiver = context.socket(zmq::REP).unwrap();
+    receiver
+        .bind("inproc://getKnowledge")
+        .expect("failed to connect worker");
+    loop {
+        println!("Want Message");
+        let message = receiver
+            .recv_string(0)
+            .expect("worker failed receiving")
+            .unwrap();
+        println!("{}", message.as_str());
+        receiver.send(&x, 0).unwrap();
+    }
+}
 
 pub fn start() {
     let context = zmq::Context::new();
@@ -43,6 +86,28 @@ pub fn start() {
 
         }
     }
+}
+
+pub fn start_test() {
+    let context = zmq::Context::new();
+    let clients = context.socket(zmq::ROUTER).unwrap();
+    let workers = context.socket(zmq::DEALER).unwrap();
+
+    clients
+        .bind("tcp://*:5555")
+        .expect("failed to bind client router");
+    workers
+        .bind("inproc://workers")
+        .expect("failed to bind worker dealer");
+
+    let ctx = context.clone();
+    thread::spawn(move || knowledge_worker(&ctx, x));
+
+    for _ in 0..4 {
+        let ctx = context.clone();
+        thread::spawn(move || worker_routine(&ctx));
+    }
+    zmq::proxy(&clients, &workers).expect("failed proxying");
 }
 
 fn get(client_id: String, topic: String) {
