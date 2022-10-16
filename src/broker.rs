@@ -59,9 +59,11 @@ fn worker_routine(context: &zmq::Context) {
 }
 
 fn put(storage: &zmq::Socket, topic: &str, message: &str) -> String {
+    println!("[PUT] Message '{}' in topic '{}'", message, topic);
     let message = format!("PUT;{};{}", topic, message);
     storage.send(&message, 0).unwrap();
-    return "oi".to_string();
+    
+    return storage.recv_string(0).unwrap().unwrap();
 }
 
 fn sub(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {

@@ -23,18 +23,17 @@ impl Storage {
     fn put(&mut self, topic: &str, message: &str) -> String {
         if !self.topics.contains_key(topic) {
             // error
-            eprintln!("Topic does not exists {}", topic);
-            return "".to_string();
+            return format!("Topic '{}' does not exist", topic);
         }
 
-        let cur_topic = self.topics.get_mut(topic);
-        let tuple = (
+        let cur_topic = self.topics.get_mut(topic).unwrap();
+        
+        let new_message = (
             message.to_string(),
-            cur_topic.as_ref().unwrap().clients.len(),
+            cur_topic.clients.len(),
         );
-        cur_topic.unwrap().messages.push(tuple);
+        cur_topic.messages.push(new_message);
 
-        //return ack
         return "ACK".to_string();
     }
 
