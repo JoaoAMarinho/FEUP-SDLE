@@ -2,6 +2,8 @@ use clap::Parser;
 mod server;
 mod broker;
 mod client;
+mod storage;
+
 
 #[derive(Parser)]
 #[command(author, version, about, long_about=None)]

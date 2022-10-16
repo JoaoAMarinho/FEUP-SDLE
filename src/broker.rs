@@ -1,61 +1,9 @@
-use std::collections::HashMap;
-use std::fs::File;
-use std::sync::Mutex;
 use std::thread;
-use std::time;
-use std::time::Duration;
-use threadpool::ThreadPool;
-
-fn worker_routine(context: &zmq::Context) {
-    let receiver = context.socket(zmq::REP).unwrap();
-    receiver
-        .connect("inproc://workers")
-        .expect("failed to connect worker");
-
-    let storage = context.socket(zmq::REQ).unwrap();
-    storage
-        .connect("inproc://storage")
-        .expect("failed to connect worker");
-
-    let msg = receiver
-        .recv_string(0)
-        .expect("worker failed receiving")
-        .unwrap();
-    // TODO
-    // Parse msg
-    // Ask for info
-    println!("Thread received, {}", msg.as_str());
-    storage.send("Hello", 0).unwrap();
-    // Receive info and do more stuff
-    let msg = storage
-        .recv_string(0)
-        .expect("failed receiving storage msg")
-        .unwrap();
-    // Send msg to requester aka receiver
-    receiver.send(msg.as_str(), 0).unwrap();
-}
-
-fn storage(context: &zmq::Context) {
-    let receiver = context.socket(zmq::REP).unwrap();
-    receiver
-        .bind("inproc://storage")
-        .expect("failed to connect storage");
-
-    loop {
-        let message = receiver
-            .recv_string(0)
-            .expect("worker failed receiving")
-            .unwrap();
-
-        println!("{}", message.as_str());
-        receiver.send("info", 0).unwrap();
-    }
-}
+use crate::storage::Storage;
+use crate::storage::start_storage;
 
 pub fn start() {
-    // TODO
-    // Read from file and create/build state
-    // Pass on to the storage, borrowing the object
+    let storage: Storage = Storage::new();
 
     let context = zmq::Context::new();
     let requesters = context.socket(zmq::ROUTER).unwrap();
@@ -69,7 +17,7 @@ pub fn start() {
         .expect("failed to bind worker dealer");
 
     let ctx = context.clone();
-    thread::spawn(move || storage(&ctx));
+    thread::spawn(move || start_storage(&ctx, storage));
 
     for _ in 0..4 {
         let ctx = context.clone();
@@ -78,14 +26,47 @@ pub fn start() {
     zmq::proxy(&requesters, &workers).expect("failed proxying");
 }
 
+fn worker_routine(context: &zmq::Context) {
+    let receiver = context.socket(zmq::REP).unwrap();
+    receiver
+        .connect("inproc://workers")
+        .expect("failed to connect worker");
+
+    let storage = context.socket(zmq::REQ).unwrap();
+    storage
+        .connect("inproc://storage")
+        .expect("failed to connect worker");
+
+
+    loop{ 
+        let msg = receiver
+            .recv_string(0)
+            .expect("worker failed receiving")
+            .unwrap();
+
+        println!("Thread received, {}", msg.as_str());
+
+        let split = msg.split(";");
+        let vec: Vec<&str> = split.collect();
+
+        let response = match vec[0] {
+            "PUT" => put(&storage, vec[1], vec[2]),
+            _ => "Unknown request".to_string(),
+        };
+        
+        println!("{}",response);
+        receiver.send(&response, 0).unwrap();
+    }
+}
+
 fn get(client_id: String, topic: String) {
     println!("[GET] Get topic {} from client {}", topic, client_id);
 }
 
-fn put(topic: String, message: String) {
-    println!("[PUT] Put message {} in topic {}", message, topic);
-
-    let message = format!("PUT {} {}", topic, message);
+fn put(storage: &zmq::Socket, topic: &str, message: &str) -> String {
+    let message = format!("PUT;{};{}", topic, message);
+    storage.send(&message, 0).unwrap();
+    return "oi".to_string();
 }
 
 fn sub(client_id: String, topic: String) {
