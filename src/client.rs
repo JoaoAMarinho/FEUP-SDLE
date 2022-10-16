@@ -1,6 +1,3 @@
-use std::fs::File;
-use std::fs::OpenOptions;
-
 const BROKER_ADDRESS: &str = "tcp://localhost:5555";
 
 pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {

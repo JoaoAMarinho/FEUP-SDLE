@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fs::File;
 
 struct Topic {
     clients: HashMap<String, usize>,
@@ -29,8 +28,8 @@ impl Storage {
             return "".to_string();
         }
 
-        let mut cur_topic = self.topics.get_mut(topic);
-        let mut tuple = (message.to_string(), cur_topic.as_ref().unwrap().clients.len());
+        let cur_topic = self.topics.get_mut(topic);
+        let tuple = (message.to_string(), cur_topic.as_ref().unwrap().clients.len());
         cur_topic.unwrap().messages.push(tuple);
 
         //return ack
@@ -42,7 +41,7 @@ impl Storage {
 
         if self.topics.contains_key(topic) {
             // topic already exists
-            let mut cur_topic = self.topics.get_mut(topic);
+            let cur_topic = self.topics.get_mut(topic);
 
             if cur_topic.as_ref().unwrap().clients.contains_key(client_id) {
                 //already subscribed

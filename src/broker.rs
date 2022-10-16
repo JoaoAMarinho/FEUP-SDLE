@@ -81,12 +81,12 @@ fn get(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
     return "oi".to_string();
 }
 
-fn unsub(client_id: String, topic: String) {
-    println!("[UNSUB] Client {} unsubscribed topic {}", client_id, topic);
+// fn unsub(client_id: String, topic: String) {
+//     println!("[UNSUB] Client {} unsubscribed topic {}", client_id, topic);
 
-    let message = format!("UNSUB {} {}", client_id, topic);
-}
+//     //let message = format!("UNSUB {} {}", client_id, topic);
+// }
 
-fn ack(operation: String) {}
+// fn ack(operation: String) {}
 
-fn send_ack() {}
+// fn send_ack() {}
