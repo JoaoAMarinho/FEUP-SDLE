@@ -22,7 +22,6 @@ impl Storage {
 
     fn put(&mut self, topic: &str, message: &str) -> String {
         if !self.topics.contains_key(topic) {
-            // error
             return format!("Topic '{}' does not exist", topic);
         }
 
@@ -37,19 +36,46 @@ impl Storage {
         return "ACK".to_string();
     }
 
-    fn sub(&mut self, client_id: &str, topic: &str) -> String {
+    fn get(&mut self, client_id: &str, topic: &str, index: &str) -> String {
         if self.topics.contains_key(topic) {
-            // topic already exists
             let cur_topic = self.topics.get_mut(topic).unwrap();
 
             if cur_topic.clients.contains_key(client_id) {
-                //already subscribed
+                
+                if cur_topic.messages.is_empty() {
+                    return format!(
+                        "Topic '{}' has no messages to consume",
+                        topic
+                    );  
+                }
+
+                let idx = index.parse::<usize>().unwrap();
+                return cur_topic.messages[idx - cur_topic.decreaser].0.clone();
+            }
+
+            return format!(
+                "Client '{}' is not subscribed to topic '{}'",
+                client_id, topic
+            );   
+        }
+
+        return format!(
+            "Topic '{}' does not exist",
+            topic
+        ); 
+    }
+
+    fn sub(&mut self, client_id: &str, topic: &str) -> String {
+        if self.topics.contains_key(topic) {
+            let cur_topic = self.topics.get_mut(topic).unwrap();
+
+            if cur_topic.clients.contains_key(client_id) {
                 return format!(
                     "Client '{}' is already subscribed to topic '{}'",
                     client_id, topic
                 );
             }
-            // subscribe client to topic by inserting him in clients
+
             cur_topic.clients.insert(
                 client_id.to_string(),
                 cur_topic.messages.len() + cur_topic.decreaser,
@@ -70,26 +96,31 @@ impl Storage {
         return "ACK".to_string();
     }
 
-    fn get(&mut self, client_id: &str, topic: &str, index: &str) -> String {
+    fn unsub(&mut self, client_id: &str, topic: &str) -> String {
         if self.topics.contains_key(topic) {
-            // topic already exists
-            let cur_topic = self.topics.get_mut(topic);
+            let cur_topic = self.topics.get_mut(topic).unwrap();
 
-            if cur_topic.as_ref().unwrap().clients.contains_key(client_id) {
-                // client is subscribed
-                // return message
-                let decreaser = cur_topic.as_ref().unwrap().decreaser;
-                let idx = index.parse::<usize>().unwrap();
-                return cur_topic.unwrap().messages[idx - decreaser].0.clone();
+            if cur_topic.clients.contains_key(client_id) {
+                let idx = cur_topic.clients.remove(client_id).unwrap();
+                println!("{}", idx);
+                //in this topic all messages from client_idx - decrease factor
+                // will decrease the nr of clients to read
+
+                return "ACK".to_string();
             }
 
-            // client is not subscribed
-            return "".to_string();
+            return format!(
+                "Client '{}' is not subscribed to topic '{}'",
+                client_id, topic
+            );
         }
 
-        // topic does not exist
-        return "".to_string();
+        return format!(
+            "Topic '{}' does not exist",
+            topic
+        );     
     }
+
 }
 
 pub fn start_storage(context: &zmq::Context, mut storage: Storage) {
@@ -111,6 +142,7 @@ pub fn start_storage(context: &zmq::Context, mut storage: Storage) {
             "PUT" => storage.put(vec[1], vec[2]),
             "SUB" => storage.sub(vec[1], vec[2]),
             "GET" => storage.get(vec[1], vec[2], "0"),
+            "UNSUB" => storage.unsub(vec[1], vec[2]),
             _ => "Unknown request".to_string(),
         };
 

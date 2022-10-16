@@ -27,7 +27,7 @@ fn main() {
         // client
         "get" => client::get(args.id, args.topic), 
         "sub" => client::sub(args.id, args.topic),
-        //"unsub" => client::unsub(),
+        "unsub" => client::unsub(args.id, args.topic),
         // server
         "put" => server::put(args.topic, args.message), 
         // broker

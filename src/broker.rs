@@ -50,6 +50,7 @@ fn worker_routine(context: &zmq::Context) {
             "PUT" => put(&storage, vec[1], vec[2]),
             "SUB" => sub(&storage, vec[1], vec[2]),
             "GET" => get(&storage, vec[1], vec[2]),
+            "UNSUB" => unsub(&storage, vec[1], vec[2]),
             _ => "Unknown request".to_string(),
         };
 
@@ -61,6 +62,14 @@ fn worker_routine(context: &zmq::Context) {
 fn put(storage: &zmq::Socket, topic: &str, message: &str) -> String {
     println!("[PUT] Message '{}' in topic '{}'", message, topic);
     let message = format!("PUT;{};{}", topic, message);
+    storage.send(&message, 0).unwrap();
+
+    return storage.recv_string(0).unwrap().unwrap();
+}
+
+fn get(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
+    println!("[GET] Get message from topic '{}' to client '{}'", topic, client_id);
+    let message = format!("GET;{};{}", client_id, topic);
     storage.send(&message, 0).unwrap();
     
     return storage.recv_string(0).unwrap().unwrap();
@@ -74,18 +83,14 @@ fn sub(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
     return storage.recv_string(0).unwrap().unwrap();
 }
 
-fn get(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
-    println!("[GET] Get topic {} from client {}", topic, client_id);
-    let message = format!("GET;{};{}", client_id, topic);
+
+fn unsub(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
+    println!("[UNSUB] Client {} unsubscribed topic {}", client_id, topic);
+    let message = format!("UNSUB;{};{}", client_id, topic);
     storage.send(&message, 0).unwrap();
-    return "oi".to_string();
+
+    return storage.recv_string(0).unwrap().unwrap();
 }
-
-// fn unsub(client_id: String, topic: String) {
-//     println!("[UNSUB] Client {} unsubscribed topic {}", client_id, topic);
-
-//     //let message = format!("UNSUB {} {}", client_id, topic);
-// }
 
 // fn ack(operation: String) {}
 
