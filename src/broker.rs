@@ -1,6 +1,6 @@
-use std::thread;
-use crate::storage::Storage;
 use crate::storage::start_storage;
+use crate::storage::Storage;
+use std::thread;
 
 pub fn start() {
     let storage: Storage = Storage::new();
@@ -37,14 +37,11 @@ fn worker_routine(context: &zmq::Context) {
         .connect("inproc://storage")
         .expect("failed to connect worker");
 
-
-    loop{ 
+    loop {
         let msg = receiver
             .recv_string(0)
             .expect("worker failed receiving")
             .unwrap();
-
-        println!("Thread received, {}", msg.as_str());
 
         let split = msg.split(";");
         let vec: Vec<&str> = split.collect();
@@ -55,8 +52,8 @@ fn worker_routine(context: &zmq::Context) {
             "GET" => get(&storage, vec[1], vec[2]),
             _ => "Unknown request".to_string(),
         };
-        
-        println!("{}",response);
+
+        println!("Sent '{}' as a response", response);
         receiver.send(&response, 0).unwrap();
     }
 }
@@ -67,11 +64,12 @@ fn put(storage: &zmq::Socket, topic: &str, message: &str) -> String {
     return "oi".to_string();
 }
 
-fn sub(storage: &zmq::Socket, client_id: &str, topic: &str) -> String  {
-    println!("[SUB] Client {} subscribed topic {}", client_id, topic);
+fn sub(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
+    println!("[SUB] Client '{}' to topic '{}'", client_id, topic);
     let message = format!("SUB;{};{}", client_id, topic);
     storage.send(&message, 0).unwrap();
-    return "oi".to_string();
+
+    return storage.recv_string(0).unwrap().unwrap();
 }
 
 fn get(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {

@@ -23,9 +23,9 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
     let client_id: String = id_arg.unwrap();
     let topic: String = topic_arg.unwrap();
 
-    println!("Client {} subscribed topic {}", client_id, topic);
     let msg = format!("SUB;{};{}", client_id, topic);
-    send_request(&msg);
+    let response = send_request(&msg);
+    println!("Response: {}", response);
 }
 
 // pub fn unsub(id_arg: Option<String>, topic_arg: Option<String>) {
@@ -52,11 +52,13 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
 
 // }
 
-fn send_request(msg: &str) -> String{
+fn send_request(msg: &str) -> String {
     let context = zmq::Context::new();
     let requester = context.socket(zmq::REQ).unwrap();
-    requester.connect(BROKER_ADDRESS)
-             .expect("Failed connecting server to broker");
+
+    requester
+        .connect(BROKER_ADDRESS)
+        .expect("Failed connecting server to broker");
 
     requester.send(msg, 0).unwrap();
 

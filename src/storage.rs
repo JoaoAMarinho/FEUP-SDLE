@@ -7,9 +7,8 @@ struct Topic {
 }
 
 pub struct Storage {
-    topics: HashMap<String, Topic>
+    topics: HashMap<String, Topic>,
 }
-
 
 impl Storage {
     pub fn new() -> Storage {
@@ -29,30 +28,35 @@ impl Storage {
         }
 
         let cur_topic = self.topics.get_mut(topic);
-        let tuple = (message.to_string(), cur_topic.as_ref().unwrap().clients.len());
+        let tuple = (
+            message.to_string(),
+            cur_topic.as_ref().unwrap().clients.len(),
+        );
         cur_topic.unwrap().messages.push(tuple);
 
         //return ack
         return "ACK".to_string();
     }
 
-    fn sub(&mut self, client_id: &str, topic: &str) -> String  {
-        println!("[SUB] Client {} subscribed topic {}", client_id, topic);
-
+    fn sub(&mut self, client_id: &str, topic: &str) -> String {
         if self.topics.contains_key(topic) {
             // topic already exists
-            let cur_topic = self.topics.get_mut(topic);
+            let cur_topic = self.topics.get_mut(topic).unwrap();
 
-            if cur_topic.as_ref().unwrap().clients.contains_key(client_id) {
+            if cur_topic.clients.contains_key(client_id) {
                 //already subscribed
-                return "".to_string()
+                return format!(
+                    "Client '{}' is already subscribed to topic '{}'",
+                    client_id, topic
+                );
             }
             // subscribe client to topic by inserting him in clients
-            let messages_len = cur_topic.as_ref().unwrap().messages.len();
-            let decreaser = cur_topic.as_ref().unwrap().decreaser;
-            cur_topic.unwrap().clients.insert(client_id.to_string(), messages_len + decreaser);
+            cur_topic.clients.insert(
+                client_id.to_string(),
+                cur_topic.messages.len() + cur_topic.decreaser,
+            );
 
-            return "ACK".to_string()
+            return "ACK".to_string();
         }
 
         let mut new_topic = Topic {
@@ -64,13 +68,11 @@ impl Storage {
         new_topic.clients.insert(client_id.to_string(), 0);
         self.topics.insert(topic.to_string(), new_topic);
 
-        return "".to_string();        
+        return "ACK".to_string();
     }
 
     fn get(&mut self, client_id: &str, topic: &str, index: &str) -> String {
-       
         if self.topics.contains_key(topic) {
-
             // topic already exists
             let cur_topic = self.topics.get_mut(topic);
 
@@ -91,7 +93,7 @@ impl Storage {
     }
 }
 
-pub fn start_storage(context: &zmq::Context,mut storage: Storage) {
+pub fn start_storage(context: &zmq::Context, mut storage: Storage) {
     let worker = context.socket(zmq::REP).unwrap();
     worker
         .bind("inproc://storage")
@@ -105,16 +107,13 @@ pub fn start_storage(context: &zmq::Context,mut storage: Storage) {
 
         let split = message.split(";");
         let vec: Vec<&str> = split.collect();
-        
-        println!("{}", message.as_str());
+
         let response = match vec[0] {
             "PUT" => storage.put(vec[1], vec[2]),
             "SUB" => storage.sub(vec[1], vec[2]),
             "GET" => storage.get(vec[1], vec[2], "0"),
             _ => "Unknown request".to_string(),
         };
-
-        println!("response {}", response);
 
         worker.send(&response, 0).unwrap();
     }
@@ -130,4 +129,3 @@ pub fn start_storage(context: &zmq::Context,mut storage: Storage) {
 
 //     let message = format!("UNSUB {} {}", client_id, topic);
 // }
-
