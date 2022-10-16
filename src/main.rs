@@ -3,7 +3,7 @@ mod server;
 mod broker;
 mod client;
 mod storage;
-
+mod utils;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about=None)]
