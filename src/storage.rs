@@ -4,7 +4,7 @@ use std::fs::File;
 struct Topic {
     clients: HashMap<String, usize>,
     messages: Vec<(String, usize)>,
-    decreaser: u32,
+    decreaser: usize,
 }
 
 pub struct Storage {
@@ -50,6 +50,7 @@ impl Storage {
             }
             // subscribe client to topic by inserting him in clients
             let messages_len = cur_topic.as_ref().unwrap().messages.len();
+            let decreaser = cur_topic.as_ref().unwrap().decreaser;
             cur_topic.unwrap().clients.insert(client_id.to_string(), messages_len + decreaser);
 
             return "ACK".to_string()
@@ -67,37 +68,28 @@ impl Storage {
         return "".to_string();        
     }
 
-    fn sub(&mut self, client_id: &str, topic: &str) -> String  {
-        println!("[SUB] Client {} subscribed topic {}", client_id, topic);
-
+    fn get(&mut self, client_id: &str, topic: &str, index: &str) -> String {
+       
         if self.topics.contains_key(topic) {
+
             // topic already exists
-            let mut cur_topic = self.topics.get_mut(topic);
+            let cur_topic = self.topics.get_mut(topic);
 
             if cur_topic.as_ref().unwrap().clients.contains_key(client_id) {
-                //already subscribed
-                return "".to_string()
+                // client is subscribed
+                // return message
+                let decreaser = cur_topic.as_ref().unwrap().decreaser;
+                let idx = index.parse::<usize>().unwrap();
+                return cur_topic.unwrap().messages[idx - decreaser].0.clone();
             }
-            // subscribe client to topic by inserting him in clients
-            let messages_len = cur_topic.as_ref().unwrap().messages.len();
-            cur_topic.unwrap().clients.insert(client_id.to_string(), messages_len);
 
-            return "ACK".to_string()
+            // client is not subscribed
+            return "".to_string();
         }
 
-        let mut new_topic = Topic {
-            clients: HashMap::new(),
-            messages: Vec::new(),
-            decreaser: 0,
-        };
-
-        new_topic.clients.insert(client_id.to_string(), 0);
-        self.topics.insert(topic.to_string(), new_topic);
-
-        return "".to_string();        
+        // topic does not exist
+        return "".to_string();
     }
-
-    fn get(&mut self, )
 }
 
 pub fn start_storage(context: &zmq::Context,mut storage: Storage) {
@@ -119,10 +111,13 @@ pub fn start_storage(context: &zmq::Context,mut storage: Storage) {
         let response = match vec[0] {
             "PUT" => storage.put(vec[1], vec[2]),
             "SUB" => storage.sub(vec[1], vec[2]),
+            "GET" => storage.get(vec[1], vec[2], "0"),
             _ => "Unknown request".to_string(),
         };
 
-        worker.send("info", 0).unwrap();
+        println!("response {}", response);
+
+        worker.send(&response, 0).unwrap();
     }
 }
 

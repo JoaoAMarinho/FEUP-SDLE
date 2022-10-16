@@ -52,16 +52,13 @@ fn worker_routine(context: &zmq::Context) {
         let response = match vec[0] {
             "PUT" => put(&storage, vec[1], vec[2]),
             "SUB" => sub(&storage, vec[1], vec[2]),
+            "GET" => get(&storage, vec[1], vec[2]),
             _ => "Unknown request".to_string(),
         };
         
         println!("{}",response);
         receiver.send(&response, 0).unwrap();
     }
-}
-
-fn get(client_id: String, topic: String) {
-    println!("[GET] Get topic {} from client {}", topic, client_id);
 }
 
 fn put(storage: &zmq::Socket, topic: &str, message: &str) -> String {
@@ -73,6 +70,13 @@ fn put(storage: &zmq::Socket, topic: &str, message: &str) -> String {
 fn sub(storage: &zmq::Socket, client_id: &str, topic: &str) -> String  {
     println!("[SUB] Client {} subscribed topic {}", client_id, topic);
     let message = format!("SUB;{};{}", client_id, topic);
+    storage.send(&message, 0).unwrap();
+    return "oi".to_string();
+}
+
+fn get(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
+    println!("[GET] Get topic {} from client {}", topic, client_id);
+    let message = format!("GET;{};{}", client_id, topic);
     storage.send(&message, 0).unwrap();
     return "oi".to_string();
 }

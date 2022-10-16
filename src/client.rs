@@ -3,16 +3,20 @@ use std::fs::OpenOptions;
 
 const BROKER_ADDRESS: &str = "tcp://localhost:5555";
 
-// pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
-//     if id_arg == None || topic_arg == None {
-//         eprintln!("Invalid format for command GET <ID> <TOPIC>");
-//     }
+pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
+    if id_arg == None || topic_arg == None {
+        eprintln!("Invalid format for command GET <ID> <TOPIC>");
+    }
 
-//     let client_id: String = id_arg.unwrap();
-//     let topic: String = topic_arg.unwrap();
+    let client_id: String = id_arg.unwrap();
+    let topic: String = topic_arg.unwrap();
 
-//     println!("Get topic {} from client {}", topic, client_id);
-// }
+    println!("Get topic {} from client {}", topic, client_id);
+    // TODO add current index to message request (from file)
+    let msg = format!("GET;{};{}", client_id, topic);
+    let response = send_request(&msg);
+    println!("Received message {}", response);
+}
 
 pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
     if id_arg == None || topic_arg == None {
@@ -24,7 +28,7 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
 
     println!("Client {} subscribed topic {}", client_id, topic);
     let msg = format!("SUB;{};{}", client_id, topic);
-    send_message(&msg);
+    send_request(&msg);
 }
 
 // pub fn unsub(id_arg: Option<String>, topic_arg: Option<String>) {
@@ -51,7 +55,7 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
 
 // }
 
-fn send_message(msg: &str){
+fn send_request(msg: &str) -> String{
     let context = zmq::Context::new();
     let requester = context.socket(zmq::REQ).unwrap();
     requester.connect(BROKER_ADDRESS)
@@ -59,6 +63,6 @@ fn send_message(msg: &str){
 
     requester.send(msg, 0).unwrap();
 
-    let message = requester.recv_msg(0).unwrap();
-    println!("{}", message.as_str().unwrap());
+    let response = requester.recv_string(0).unwrap().unwrap();
+    return response;
 }

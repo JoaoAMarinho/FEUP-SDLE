@@ -8,6 +8,11 @@
 - sub <id> <topic>
 - unsub <id> <topic>
 
+`cargo run -- broker`
+`cargo run -- get -t "boas" -i "123"`
+`cargo run -- put -t "boas" -m "oaoaoao"`
+`cargo run -- sub -t "boas" -i "123"`
+
 ### Notes
 
 Implement a **Publish-Subscribe Service**.
