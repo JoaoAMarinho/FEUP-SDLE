@@ -2,8 +2,8 @@
 
 - broker
 
-- put <id> <msg>
+- put <topic> <msg>
 
-- get <id>
-- sub <id> 
-- unsub <id>
+- get <id> <topic>
+- sub <id> <topic>
+- unsub <id> <topic>

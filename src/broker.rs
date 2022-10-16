@@ -1,46 +1,72 @@
+use std::collections::HashMap;
+use std::sync::Mutex;
+use std::fs::File;
+use std::time;
+use std::thread;
+use threadpool::ThreadPool;
 
-fn main() {
+
+pub fn start() {
     let context = zmq::Context::new();
-    let frontend = context.socket(zmq::ROUTER).unwrap();
-    let backend = context.socket(zmq::DEALER).unwrap();
+    let client = context.socket(zmq::REP).unwrap();
+    let server = context.socket(zmq::REP).unwrap();
+    let pool = ThreadPool::new(4);
 
-    frontend
+    client
         .bind("tcp://*:5559")
-        .expect("failed binding frontend");
-    backend
+        .expect("failed binding client");
+    server
         .bind("tcp://*:5560")
-        .expect("failed binding backend");
+        .expect("failed binding server");
 
     loop {
+        println!("loop");
         let mut items = [
-            frontend.as_poll_item(zmq::POLLIN),
-            backend.as_poll_item(zmq::POLLIN),
+            client.as_poll_item(zmq::POLLIN),
+            server.as_poll_item(zmq::POLLIN),
         ];
         zmq::poll(&mut items, -1).unwrap();
 
         if items[0].is_readable() {
-            loop {
-                let message = frontend.recv_msg(0).unwrap();
-                let more = message.get_more();
-                backend
-                    .send(message, if more { zmq::SNDMORE } else { 0 })
-                    .unwrap();
-                if !more {
-                    break;
-                }
-            }
+            let message = client.recv_msg(0).unwrap();
+            println!("client {}",message.as_str().unwrap());
+            pool.execute(|| get("test".to_string(),"test".to_string()) );
+            // server.send(message, 0).unwrap()
+            
         }
         if items[1].is_readable() {
-            loop {
-                let message = backend.recv_msg(0).unwrap();
-                let more = message.get_more();
-                frontend
-                    .send(message, if more { zmq::SNDMORE } else { 0 })
-                    .unwrap();
-                if !more {
-                    break;
-                }
-            }
+            let message = server.recv_msg(0).unwrap();
+            println!("server {}",message.as_str().unwrap());
+            pool.execute(|| get("test".to_string(),"test".to_string()) );
+            // client.send(message, 0).unwrap();
+            println!("finished");
+
         }
     }
 }
+
+fn get(client_id: String, topic: String) {
+    println!("[GET] Get topic {} from client {}", topic, client_id);
+}
+
+fn put(topic: String, message: String) {
+    println!("[PUT] Put message {} in topic {}", message, topic);
+
+    let message = format!("PUT {} {}", topic, message);
+}
+
+fn sub(client_id: String, topic: String) {
+    println!("[SUB] Client {} subscribed topic {}", client_id, topic);
+
+    let message = format!("SUB {} {}", client_id, topic);
+}
+
+fn unsub(client_id: String, topic: String) {
+    println!("[UNSUB] Client {} unsubscribed topic {}", client_id, topic);
+
+    let message = format!("UNSUB {} {}", client_id, topic);
+}
+
+fn ack(operation: String) {}
+
+fn send_ack() {}
