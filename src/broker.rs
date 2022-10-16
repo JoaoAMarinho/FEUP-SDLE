@@ -51,6 +51,7 @@ fn worker_routine(context: &zmq::Context) {
 
         let response = match vec[0] {
             "PUT" => put(&storage, vec[1], vec[2]),
+            "SUB" => sub(&storage, vec[1], vec[2]),
             _ => "Unknown request".to_string(),
         };
         
@@ -69,10 +70,11 @@ fn put(storage: &zmq::Socket, topic: &str, message: &str) -> String {
     return "oi".to_string();
 }
 
-fn sub(client_id: String, topic: String) {
+fn sub(storage: &zmq::Socket, client_id: &str, topic: &str) -> String  {
     println!("[SUB] Client {} subscribed topic {}", client_id, topic);
-
-    let message = format!("SUB {} {}", client_id, topic);
+    let message = format!("SUB;{};{}", client_id, topic);
+    storage.send(&message, 0).unwrap();
+    return "oi".to_string();
 }
 
 fn unsub(client_id: String, topic: String) {

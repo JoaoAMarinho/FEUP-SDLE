@@ -1,15 +1,16 @@
 use std::collections::HashMap;
 use std::fs::File;
 
-pub struct Storage {
-    topics: HashMap<&str, Topic>
-}
-
 struct Topic {
-    clients: HashMap<&str, i32>,
-    messages: Vec<(data: &str, n_clients: i32)>,
+    clients: HashMap<String, usize>,
+    messages: Vec<(String, usize)>,
     decreaser: u32,
 }
+
+pub struct Storage {
+    topics: HashMap<String, Topic>
+}
+
 
 impl Storage {
     pub fn new() -> Storage {
@@ -17,12 +18,89 @@ impl Storage {
         // Read from file and create/build state
 
         return Storage {
-            topics: "topic".to_string()
+            topics: HashMap::new(),
         };
     }
+
+    fn put(&mut self, topic: &str, message: &str) -> String {
+        if !self.topics.contains_key(topic) {
+            // error
+            eprintln!("Topic does not exists {}", topic);
+            return "".to_string();
+        }
+
+        let mut cur_topic = self.topics.get_mut(topic);
+        let mut tuple = (message.to_string(), cur_topic.as_ref().unwrap().clients.len());
+        cur_topic.unwrap().messages.push(tuple);
+
+        //return ack
+        return "ACK".to_string();
+    }
+
+    fn sub(&mut self, client_id: &str, topic: &str) -> String  {
+        println!("[SUB] Client {} subscribed topic {}", client_id, topic);
+
+        if self.topics.contains_key(topic) {
+            // topic already exists
+            let mut cur_topic = self.topics.get_mut(topic);
+
+            if cur_topic.as_ref().unwrap().clients.contains_key(client_id) {
+                //already subscribed
+                return "".to_string()
+            }
+            // subscribe client to topic by inserting him in clients
+            let messages_len = cur_topic.as_ref().unwrap().messages.len();
+            cur_topic.unwrap().clients.insert(client_id.to_string(), messages_len + decreaser);
+
+            return "ACK".to_string()
+        }
+
+        let mut new_topic = Topic {
+            clients: HashMap::new(),
+            messages: Vec::new(),
+            decreaser: 0,
+        };
+
+        new_topic.clients.insert(client_id.to_string(), 0);
+        self.topics.insert(topic.to_string(), new_topic);
+
+        return "".to_string();        
+    }
+
+    fn sub(&mut self, client_id: &str, topic: &str) -> String  {
+        println!("[SUB] Client {} subscribed topic {}", client_id, topic);
+
+        if self.topics.contains_key(topic) {
+            // topic already exists
+            let mut cur_topic = self.topics.get_mut(topic);
+
+            if cur_topic.as_ref().unwrap().clients.contains_key(client_id) {
+                //already subscribed
+                return "".to_string()
+            }
+            // subscribe client to topic by inserting him in clients
+            let messages_len = cur_topic.as_ref().unwrap().messages.len();
+            cur_topic.unwrap().clients.insert(client_id.to_string(), messages_len);
+
+            return "ACK".to_string()
+        }
+
+        let mut new_topic = Topic {
+            clients: HashMap::new(),
+            messages: Vec::new(),
+            decreaser: 0,
+        };
+
+        new_topic.clients.insert(client_id.to_string(), 0);
+        self.topics.insert(topic.to_string(), new_topic);
+
+        return "".to_string();        
+    }
+
+    fn get(&mut self, )
 }
 
-pub fn start_storage(context: &zmq::Context, storage: Storage) {
+pub fn start_storage(context: &zmq::Context,mut storage: Storage) {
     let worker = context.socket(zmq::REP).unwrap();
     worker
         .bind("inproc://storage")
@@ -34,7 +112,28 @@ pub fn start_storage(context: &zmq::Context, storage: Storage) {
             .expect("worker failed receiving")
             .unwrap();
 
+        let split = message.split(";");
+        let vec: Vec<&str> = split.collect();
+        
         println!("{}", message.as_str());
+        let response = match vec[0] {
+            "PUT" => storage.put(vec[1], vec[2]),
+            "SUB" => storage.sub(vec[1], vec[2]),
+            _ => "Unknown request".to_string(),
+        };
+
         worker.send("info", 0).unwrap();
     }
 }
+
+// fn get(client_id: String, topic: String) {
+//     println!("[GET] Get topic {} from client {}", topic, client_id);
+
+// }
+
+// fn unsub(client_id: String, topic: String) {
+//     println!("[UNSUB] Client {} unsubscribed topic {}", client_id, topic);
+
+//     let message = format!("UNSUB {} {}", client_id, topic);
+// }
+

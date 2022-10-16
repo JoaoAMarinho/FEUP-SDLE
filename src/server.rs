@@ -12,17 +12,17 @@ pub fn put(topic_arg: Option<String>, message_arg: Option<String>) {
     let message: String = message_arg.unwrap();
 
     println!("Put message {} of topic {}", message, topic); 
-    send_put_message(topic, message);
+    let msg = format!("PUT;{};{}", topic, message);
+    send_message(&msg);
 }
 
-fn send_put_message(topic: String, message: String){
+fn send_message(msg: &str){
     let context = zmq::Context::new();
     let requester = context.socket(zmq::REQ).unwrap();
     requester.connect(BROKER_ADDRESS)
              .expect("Failed connecting server to broker");
 
-    let msg = format!("PUT;{};{}", topic, message);
-    requester.send(&msg, 0).unwrap();
+    requester.send(msg, 0).unwrap();
 
     let message = requester.recv_msg(0).unwrap();
     println!("{}", message.as_str().unwrap());

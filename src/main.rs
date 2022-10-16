@@ -25,8 +25,8 @@ fn main() {
 
     match args.command.as_str() {
         // client
-        //"get" => client::get(args.id, args.topic), 
-        //"sub" => client::sub(),
+        // "get" => client::get(args.id, args.topic), 
+        "sub" => client::sub(args.id, args.topic),
         //"unsub" => client::unsub(),
         // server
         "put" => server::put(args.topic, args.message), 

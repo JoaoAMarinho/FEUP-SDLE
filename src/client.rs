@@ -1,33 +1,18 @@
 use std::fs::File;
 use std::fs::OpenOptions;
 
-fn main() {
-    let context = zmq::Context::new();
-    let requester = context.socket(zmq::REQ).unwrap();
-    requester
-        .connect("tcp://localhost:5559")
-        .expect("failed to connect requester");
-    for request_nbr in 0..10 {
-        requester.send("Hello", 0).unwrap();
-        let message = requester.recv_msg(0).unwrap();
-        println!(
-            "Received reply {} {}",
-            request_nbr,
-            message.as_str().unwrap()
-        );
-    }
-}
+const BROKER_ADDRESS: &str = "tcp://localhost:5555";
 
-pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
-    if id_arg == None || topic_arg == None {
-        eprintln!("Invalid format for command GET <ID> <TOPIC>");
-    }
+// pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
+//     if id_arg == None || topic_arg == None {
+//         eprintln!("Invalid format for command GET <ID> <TOPIC>");
+//     }
 
-    let client_id: String = id_arg.unwrap();
-    let topic: String = topic_arg.unwrap();
+//     let client_id: String = id_arg.unwrap();
+//     let topic: String = topic_arg.unwrap();
 
-    println!("Get topic {} from client {}", topic, client_id);
-}
+//     println!("Get topic {} from client {}", topic, client_id);
+// }
 
 pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
     if id_arg == None || topic_arg == None {
@@ -38,28 +23,42 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
     let topic: String = topic_arg.unwrap();
 
     println!("Client {} subscribed topic {}", client_id, topic);
+    let msg = format!("SUB;{};{}", client_id, topic);
+    send_message(&msg);
 }
 
-pub fn unsub(id_arg: Option<String>, topic_arg: Option<String>) {
-    if id_arg == None || topic_arg == None {
-        eprintln!("Invalid format for command UNSUB <ID> <TOPIC>");
-    }
+// pub fn unsub(id_arg: Option<String>, topic_arg: Option<String>) {
+//     if id_arg == None || topic_arg == None {
+//         eprintln!("Invalid format for command UNSUB <ID> <TOPIC>");
+//     }
 
-    let client_id: String = id_arg.unwrap();
-    let topic: String = topic_arg.unwrap();
+//     let client_id: String = id_arg.unwrap();
+//     let topic: String = topic_arg.unwrap();
 
-    println!("Client {} unsubscribed topic {}", client_id, topic);
-}
+//     println!("Client {} unsubscribed topic {}", client_id, topic);
+// }
 
-fn get_curr_index() {
-    //sets the option to create a new file, failing if it already exists
-    let file = OpenOptions::new().write(true).open("");
-    if file.is_ok() { }
-}
+// fn get_curr_index() {
+//     //sets the option to create a new file, failing if it already exists
+//     let file = OpenOptions::new().write(true).open("");
+//     if file.is_ok() { }
+// }
 
-fn update_curr_index() {
-    //sets the option to create a new file, failing if it already exists
-    let file = OpenOptions::new().write(true).open("");
-    if file.is_ok() { }
+// fn update_curr_index() {
+//     //sets the option to create a new file, failing if it already exists
+//     let file = OpenOptions::new().write(true).open("");
+//     if file.is_ok() { }
 
+// }
+
+fn send_message(msg: &str){
+    let context = zmq::Context::new();
+    let requester = context.socket(zmq::REQ).unwrap();
+    requester.connect(BROKER_ADDRESS)
+             .expect("Failed connecting server to broker");
+
+    requester.send(msg, 0).unwrap();
+
+    let message = requester.recv_msg(0).unwrap();
+    println!("{}", message.as_str().unwrap());
 }
