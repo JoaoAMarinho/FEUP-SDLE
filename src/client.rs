@@ -15,7 +15,7 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
 
     let client_id: String = id_arg.unwrap();
     let topic: String = topic_arg.unwrap();
-    let file_path = format!("{}/{}",CLIENT_PATH, encode(client_id));
+    let file_path = format!("{}/{}",CLIENT_PATH, encode(&client_id));
     let idx = utils::read_file(&file_path);
 
 

@@ -167,7 +167,7 @@ impl Storage {
 
                 let mut idx = idx-cur_topic.decreaser;
                 while idx != cur_topic.messages.len() {
-                    let message = cur_topic.messages[idx];
+                    let message = cur_topic.messages[idx].clone();
                     let mut client_count = message.2;
                     client_count-=1;
 
