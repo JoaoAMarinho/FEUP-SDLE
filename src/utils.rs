@@ -3,7 +3,6 @@ use std::fs::File;
 use std::fs;
 use std::io::BufReader;
 use std::io::prelude::*;
-use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 
@@ -29,6 +28,11 @@ pub fn create_directory(path: &str) -> std::io::Result<()> {
 pub fn create_file(path: &str, content: &str) -> std::io::Result<()> {
     let mut file = std::fs::File::create(path)?;
     file.write_all(content.as_bytes())?;
+    Ok(())
+}
+
+pub fn remove_file(path: &str) -> std::io::Result<()> {
+    fs::remove_file(path)?;
     Ok(())
 }
 
