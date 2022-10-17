@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 zmq = "0.9"
+base64 = "0.13.0"
 clap = { version = "4.0", features = ["derive"] }
