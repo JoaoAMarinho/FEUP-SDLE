@@ -38,6 +38,10 @@ impl Storage {
         }
 
         let cur_topic = self.topics.get_mut(&topic_encoded).unwrap();
+
+        if cur_topic.clients.len() == 0 {
+            return "ACK".to_string();
+        }
         
         let new_message = (
             utils::get_timestamp().to_string(),
@@ -74,13 +78,13 @@ impl Storage {
                 let messages =  &mut cur_topic.messages;
 
                 if *client_idx < *idx {
-                    let message = messages[*idx].clone();
+                    let message = messages[*client_idx - cur_topic.decreaser].clone();
                     
                     let mut client_count = message.2;
                     client_count-=1;
                     
                     if client_count == 0 {
-                        messages.remove(*idx);
+                        messages.remove(*client_idx - cur_topic.decreaser);
                         utils::remove_file(&format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_encoded, message.0)).unwrap();
                         cur_topic.decreaser+=1;
                         utils::create_file(&format!("{}/{}/decreaser.txt", STORAGE_PATH, topic_encoded), &cur_topic.decreaser.to_string()).unwrap();
@@ -94,6 +98,13 @@ impl Storage {
                     utils::create_file(&format!("{}/{}/clients/{}.txt", STORAGE_PATH, topic_encoded, client_id_encoded), &client_idx.to_string()).unwrap();
                 }
 
+                if messages.is_empty() || (*idx - cur_topic.decreaser) >= messages.len() {
+                    return format!(
+                        "ACK;ERROR;Topic '{}' has no messages to consume",
+                        topic
+                    );  
+                }
+
                 return format!("ACK;MSG;{}",messages[*idx - cur_topic.decreaser].1.clone());
             }
 
@@ -104,7 +115,7 @@ impl Storage {
         }
 
         return format!(
-            "ACK; ERROR; Topic '{}' does not exist",
+            "ACK;ERROR; Topic '{}' does not exist",
             topic
         ); 
     }
@@ -162,7 +173,14 @@ impl Storage {
             let cur_topic = self.topics.get_mut(&topic_encoded).unwrap();
 
             if cur_topic.clients.contains_key(&client_id_encoded) {
-                let idx = cur_topic.clients.remove(&client_id_encoded).unwrap();                
+                let idx = cur_topic.clients.remove(&client_id_encoded).unwrap();
+                
+                if cur_topic.clients.len() == 0 {
+                    self.topics.remove(&topic_encoded);
+                    utils::remove_directory(&format!("{}/{}", STORAGE_PATH, topic_encoded)).unwrap();
+                    return "ACK".to_string();
+                }
+
                 utils::remove_file(&format!("{}/{}/clients/{}.txt", STORAGE_PATH, topic_encoded, client_id_encoded)).unwrap();
 
                 let mut idx = idx-cur_topic.decreaser;
@@ -189,13 +207,13 @@ impl Storage {
             }
 
             return format!(
-                "Client '{}' is not subscribed to topic '{}'",
+                "ACK;Client '{}' is not subscribed to topic '{}'",
                 client_id, topic
             );
         }
 
         return format!(
-            "Topic '{}' does not exist",
+            "ACK;Topic '{}' does not exist",
             topic
         );     
     }
