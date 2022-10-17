@@ -1,6 +1,8 @@
-use crate::utils::request_reply;
+use crate::utils::timeout_request;
 
 const BROKER_ADDRESS: &str = "tcp://localhost:5555";
+const ERROR: &str = "ERROR";
+const MESSAGE: &str = "MSG";
 
 pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
     if id_arg == None || topic_arg == None {
@@ -13,7 +15,20 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
 
     // TODO add current index to message request (read from file)
     let msg = format!("GET;{};{}", client_id, topic);
-    request_reply(&msg, BROKER_ADDRESS);
+    let mut response: String = "".to_string(); 
+    if timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
+        eprintln!("Error GET message.");
+        return;
+    }
+
+    let split = response.split(";");
+    let res: Vec<&str> = split.collect();
+    let info = &res[1..].join(";");
+    if res[0] == ERROR {
+        println!("Couldn't retrive message. {}", info);
+    } else if res[0] == MESSAGE {
+        println!("Message retrived: {}", info);
+    }
 }
 
 pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
@@ -26,7 +41,12 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
     let topic: String = topic_arg.unwrap();
 
     let msg = format!("SUB;{};{}", client_id, topic);
-    request_reply(&msg, BROKER_ADDRESS);
+    let mut response = "".to_string();
+    if timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
+        eprintln!("Error SUB topic.");
+        return;
+    }
+    println!("Success {}", response);
     //TODO create file according to msg
 }
 
@@ -40,7 +60,12 @@ pub fn unsub(id_arg: Option<String>, topic_arg: Option<String>) {
     let topic: String = topic_arg.unwrap();
 
     let msg = format!("UNSUB;{};{}", client_id, topic);
-    request_reply(&msg, BROKER_ADDRESS);
+    let mut response = "".to_string();
+    if timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
+        eprintln!("Error UNSUB topic.");
+        return;
+    }
+    println!("Success {}", response);
     //TODO delete file according to msg
 }
 

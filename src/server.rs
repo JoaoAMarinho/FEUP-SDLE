@@ -1,4 +1,4 @@
-use crate::utils::request_reply;
+use crate::utils::timeout_request;
 
 const BROKER_ADDRESS: &str = "tcp://localhost:5556";
 
@@ -11,5 +11,11 @@ pub fn put(topic_arg: Option<String>, message_arg: Option<String>) {
     let message: String = message_arg.unwrap();
 
     let msg = format!("PUT;{};{}", topic, message);
-    request_reply(&msg, BROKER_ADDRESS);
+
+    let mut response = "".to_string();
+    if timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
+        eprintln!("Error PUT message.");
+        return;
+    }
+    println!("Success {}", response);
 }
