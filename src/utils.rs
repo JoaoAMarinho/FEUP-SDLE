@@ -3,7 +3,6 @@ use std::fs::File;
 use std::fs;
 use std::io::BufReader;
 use std::io::prelude::*;
-use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
 const DEFAULT_TIMEOUT: i64 = 2500;
 const DEFAULT_RETRIES: i32 = 3;

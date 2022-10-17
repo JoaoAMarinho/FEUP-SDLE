@@ -1,6 +1,7 @@
 use crate::utils;
 extern crate base64;
 use base64::encode;
+use std::str::FromStr;
 
 const BROKER_ADDRESS: &str = "tcp://localhost:5555";
 const ERROR: &str = "ERROR";
@@ -34,6 +35,8 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
         println!("Couldn't retrive message. {}", info);
     } else if res[0] == MESSAGE {
         println!("Message retrived: {}", info);
+        let idx: i32 = FromStr::from_str(&idx).unwrap();
+        utils::create_file(&file_path, &(idx + 1).to_string());
     }
 }
 
