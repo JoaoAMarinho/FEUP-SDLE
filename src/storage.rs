@@ -20,7 +20,7 @@ impl Storage {
         };
     }
 
-    fn put(&mut self, topic: &str, message: &str) -> String {
+    pub fn put(&mut self, topic: &str, message: &str) -> String {
         if !self.topics.contains_key(topic) {
             return format!("Topic '{}' does not exist", topic);
         }
@@ -36,7 +36,7 @@ impl Storage {
         return "ACK".to_string();
     }
 
-    fn get(&mut self, client_id: &str, topic: &str, index: &str) -> String {
+    pub fn get(&mut self, client_id: &str, topic: &str, index: &str) -> String {
         if self.topics.contains_key(topic) {
             let cur_topic = self.topics.get_mut(topic).unwrap();
 
@@ -65,7 +65,7 @@ impl Storage {
         ); 
     }
 
-    fn sub(&mut self, client_id: &str, topic: &str) -> String {
+    pub fn sub(&mut self, client_id: &str, topic: &str) -> String {
         if self.topics.contains_key(topic) {
             let cur_topic = self.topics.get_mut(topic).unwrap();
 
@@ -96,7 +96,7 @@ impl Storage {
         return "ACK".to_string();
     }
 
-    fn unsub(&mut self, client_id: &str, topic: &str) -> String {
+    pub fn unsub(&mut self, client_id: &str, topic: &str) -> String {
         if self.topics.contains_key(topic) {
             let cur_topic = self.topics.get_mut(topic).unwrap();
 
@@ -121,31 +121,4 @@ impl Storage {
         );     
     }
 
-}
-
-pub fn start_storage(context: &zmq::Context, mut storage: Storage) {
-    let worker = context.socket(zmq::REP).unwrap();
-    worker
-        .bind("inproc://storage")
-        .expect("failed to connect storage");
-
-    loop {
-        let message = worker
-            .recv_string(0)
-            .expect("worker failed receiving")
-            .unwrap();
-
-        let split = message.split(";");
-        let vec: Vec<&str> = split.collect();
-
-        let response = match vec[0] {
-            "PUT" => storage.put(vec[1], vec[2]),
-            "SUB" => storage.sub(vec[1], vec[2]),
-            "GET" => storage.get(vec[1], vec[2], "0"),
-            "UNSUB" => storage.unsub(vec[1], vec[2]),
-            _ => "Unknown request".to_string(),
-        };
-
-        worker.send(&response, 0).unwrap();
-    }
 }

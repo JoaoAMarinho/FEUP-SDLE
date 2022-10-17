@@ -1,97 +1,67 @@
-use crate::storage::start_storage;
 use crate::storage::Storage;
-use std::thread;
+
+const CLIENTS_ADDRESS: &str = "tcp://*:5555";
+const SERVERS_ADDRESS: &str = "tcp://*:5556";
 
 pub fn start() {
-    let storage: Storage = Storage::new();
+    let mut storage: Storage = Storage::new();
 
     let context = zmq::Context::new();
-    let requesters = context.socket(zmq::ROUTER).unwrap();
-    let workers = context.socket(zmq::DEALER).unwrap();
+    let clients = context.socket(zmq::REP).unwrap();
+    let servers = context.socket(zmq::REP).unwrap();
 
-    requesters
-        .bind("tcp://*:5555")
-        .expect("failed to bind requester router");
-    workers
-        .bind("inproc://workers")
-        .expect("failed to bind worker dealer");
-
-    let ctx = context.clone();
-    thread::spawn(move || start_storage(&ctx, storage));
-
-    for _ in 0..4 {
-        let ctx = context.clone();
-        thread::spawn(move || worker_routine(&ctx));
-    }
-    zmq::proxy(&requesters, &workers).expect("failed proxying");
-}
-
-fn worker_routine(context: &zmq::Context) {
-    let receiver = context.socket(zmq::REP).unwrap();
-    receiver
-        .connect("inproc://workers")
-        .expect("failed to connect worker");
-
-    let storage = context.socket(zmq::REQ).unwrap();
-    storage
-        .connect("inproc://storage")
-        .expect("failed to connect worker");
-
-    loop {
-        let msg = receiver
-            .recv_string(0)
-            .expect("worker failed receiving")
-            .unwrap();
-
-        let split = msg.split(";");
-        let vec: Vec<&str> = split.collect();
-
-        let response = match vec[0] {
-            "PUT" => put(&storage, vec[1], vec[2]),
-            "SUB" => sub(&storage, vec[1], vec[2]),
-            "GET" => get(&storage, vec[1], vec[2]),
-            "UNSUB" => unsub(&storage, vec[1], vec[2]),
-            _ => "Unknown request".to_string(),
-        };
-
-        println!("Sent '{}' as a response", response);
-        receiver.send(&response, 0).unwrap();
-    }
-}
-
-fn put(storage: &zmq::Socket, topic: &str, message: &str) -> String {
-    println!("[PUT] Message '{}' in topic '{}'", message, topic);
-    let message = format!("PUT;{};{}", topic, message);
-    storage.send(&message, 0).unwrap();
-
-    return storage.recv_string(0).unwrap().unwrap();
-}
-
-fn get(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
-    println!("[GET] Get message from topic '{}' to client '{}'", topic, client_id);
-    let message = format!("GET;{};{}", client_id, topic);
-    storage.send(&message, 0).unwrap();
+    clients
+        .bind(CLIENTS_ADDRESS)
+        .expect("failed to bind clients router");
+    servers
+        .bind(SERVERS_ADDRESS)
+        .expect("failed to bind servers dealer");
     
-    return storage.recv_string(0).unwrap().unwrap();
+        loop {
+            let mut items = [
+                clients.as_poll_item(zmq::POLLIN),
+                servers.as_poll_item(zmq::POLLIN),
+            ];
+            zmq::poll(&mut items, -1).unwrap();
+    
+            if items[0].is_readable() {
+                let message = clients.recv_string(0).unwrap().unwrap();
+                let response = parse_message(&message, &mut storage);
+                clients.send(&response, 0).unwrap();
+            }
+            if items[1].is_readable() {
+                let message = servers.recv_string(0).unwrap().unwrap();
+                let response = parse_message(&message, &mut storage);
+                servers.send(&response, 0).unwrap();
+            }  
+        }
 }
 
-fn sub(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
-    println!("[SUB] Client '{}' to topic '{}'", client_id, topic);
-    let message = format!("SUB;{};{}", client_id, topic);
-    storage.send(&message, 0).unwrap();
+fn parse_message(msg: &str, storage: &mut Storage) -> String {
 
-    return storage.recv_string(0).unwrap().unwrap();
+    let split = msg.split(";");
+    let vec: Vec<&str> = split.collect();
+
+    let response = match vec[0] {
+        "PUT" => {
+            println!("[PUT] Message '{}' in topic '{}'", vec[1], vec[2]);
+            storage.put(vec[1], vec[2])
+        },
+        "SUB" => {
+            println!("[SUB] Client '{}' to topic '{}'", vec[1], vec[2]);
+            storage.sub(vec[1], vec[2])
+        },
+        "GET" => {
+            println!("[GET] Get message from topic '{}' to client '{}'", vec[1], vec[2]);
+            storage.get(vec[1], vec[2], "0")
+        },
+        "UNSUB" => {
+            println!("[UNSUB] Client {} unsubscribed topic {}", vec[1], vec[2]);
+            storage.unsub(vec[1], vec[2])
+        },
+        _ => "Unknown request".to_string(),
+    };
+
+    println!("Sent '{}' as a response", response);
+    return response;
 }
-
-
-fn unsub(storage: &zmq::Socket, client_id: &str, topic: &str) -> String {
-    println!("[UNSUB] Client {} unsubscribed topic {}", client_id, topic);
-    let message = format!("UNSUB;{};{}", client_id, topic);
-    storage.send(&message, 0).unwrap();
-
-    return storage.recv_string(0).unwrap().unwrap();
-}
-
-// fn ack(operation: String) {}
-
-// fn send_ack() {}

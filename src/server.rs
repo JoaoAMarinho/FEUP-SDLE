@@ -1,6 +1,6 @@
 use crate::utils::request_reply;
 
-const BROKER_ADDRESS: &str = "tcp://localhost:5555";
+const BROKER_ADDRESS: &str = "tcp://localhost:5556";
 
 pub fn put(topic_arg: Option<String>, message_arg: Option<String>) {
     if topic_arg == None || message_arg == None {
