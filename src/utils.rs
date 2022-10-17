@@ -65,6 +65,11 @@ pub fn create_file(path: &str, content: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn remove_file(path: &str) -> std::io::Result<()> {
+    fs::remove_file(path)?;
+    Ok(())
+}
+
 pub fn read_file(path: &str) -> String {
     let file = File::open(path).expect("[READ] File does not exist.");
     let mut buf_reader = BufReader::new(file);

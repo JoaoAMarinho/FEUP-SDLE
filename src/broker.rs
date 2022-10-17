@@ -52,7 +52,7 @@ fn parse_message(msg: &str, storage: &mut Storage) -> String {
             storage.sub(vec[1], vec[2])
         },
         "GET" => {
-            println!("[GET] Get message from topic '{}' to client '{}' index '{}'", vec[1], vec[2], vec[3]);
+            println!("[GET] Get message from topic '{}' to client '{}' index '{}'", vec[2], vec[1], vec[3]);
             storage.get(vec[1], vec[2], vec[3])
         },
         "UNSUB" => {

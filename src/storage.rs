@@ -32,7 +32,6 @@ impl Storage {
 
     pub fn put(&mut self, topic: &str, message: &str) -> String {
         let topic_encoded: String = encode(topic);
-        let message_encoded: String = encode(message);
 
         if !self.topics.contains_key(&topic_encoded) {
             return format!("Topic '{}' does not exist", topic);
@@ -40,16 +39,16 @@ impl Storage {
 
         let cur_topic = self.topics.get_mut(&topic_encoded).unwrap();
         
-        let timestamp = utils::get_timestamp();
         let new_message = (
-            timestamp,
+            utils::get_timestamp().to_string(),
             message.to_string(),
             cur_topic.clients.len(),
         );
-        cur_topic.messages.push(new_message);
         
-        let content = format!("{}\n###\n{}", new_message.1, message);
-        utils::create_file(&format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_encoded, timestamp), &content).unwrap();
+        let content = format!("{}\n###\n{}", new_message.2, message);
+        utils::create_file(&format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_encoded, new_message.0), &content).unwrap();
+
+        cur_topic.messages.push(new_message);
 
         return "ACK".to_string();
     }
@@ -59,36 +58,53 @@ impl Storage {
         let client_id_encoded: String = encode(client_id);
 
         if self.topics.contains_key(&topic_encoded) {
-            let cur_topic = self.topics.get_mut(topic).unwrap();
+            let mut cur_topic = self.topics.get_mut(&topic_encoded).unwrap();
 
             if cur_topic.clients.contains_key(&client_id_encoded) {
                 
                 if cur_topic.messages.is_empty() {
                     return format!(
-                        "Topic '{}' has no messages to consume",
+                        "ACK;ERROR;Topic '{}' has no messages to consume",
                         topic
                     );  
                 }
 
-                // TODO
-                // If index < indice do cliente: atualizar o numero de gajos que podem ler, atualizar esse valor (no file e em mem)
-                let mut client_idx = cur_topic.clients.get_mut(&client_id_encoded).unwrap();
+                let client_idx = cur_topic.clients.get_mut(&client_id_encoded).unwrap();
+                let idx = &index.parse::<usize>().unwrap();
+                let messages =  &mut cur_topic.messages;
 
-                // Read message
-                // Update value of number of readers
-                // If number of readers == 0: remove
-                let idx = index.parse::<usize>().unwrap();
-                return cur_topic.messages[idx - cur_topic.decreaser].1.clone();
+                if *client_idx < *idx {
+                    let message = messages[*idx].clone();
+                    
+                    let mut client_count = message.2;
+                    client_count-=1;
+                    
+                    if client_count == 0 {
+                        messages.remove(*idx);
+                        utils::remove_file(&format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_encoded, message.0)).unwrap();
+                        cur_topic.decreaser+=1;
+                        utils::create_file(&format!("{}/{}/decreaser.txt", STORAGE_PATH, topic_encoded), &cur_topic.decreaser.to_string()).unwrap();
+                    } else {
+                        let content = format!("{}\n###\n{}", client_count, message.1);
+                        utils::create_file(&format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_encoded, message.0), &content).unwrap();
+                    }
+
+                    
+                    *client_idx = *idx;
+                    utils::create_file(&format!("{}/{}/clients/{}.txt", STORAGE_PATH, topic_encoded, client_id_encoded), &client_idx.to_string()).unwrap();
+                }
+
+                return format!("ACK;MSG;{}",messages[*idx - cur_topic.decreaser].1.clone());
             }
 
             return format!(
-                "Client '{}' is not subscribed to topic '{}'",
+                "ACK;ERROR;Client '{}' is not subscribed to topic '{}'",
                 client_id, topic
             );   
         }
 
         return format!(
-            "Topic '{}' does not exist",
+            "ACK; ERROR; Topic '{}' does not exist",
             topic
         ); 
     }
@@ -102,7 +118,7 @@ impl Storage {
 
             if cur_topic.clients.contains_key(&client_id_encoded) {
                 return format!(
-                    "Client '{}' is already subscribed to topic '{}'",
+                    "ACK;ERROR;Client '{}' is already subscribed to topic '{}'",
                     client_id, topic
                 );
             }
@@ -115,7 +131,7 @@ impl Storage {
             
             utils::create_file(&format!("{}/{}/clients/{}.txt", STORAGE_PATH, topic_encoded, client_id_encoded), &content.to_string()).unwrap();
 
-            return "ACK".to_string();
+            return format!("ACK;{}", &content.to_string());
         }
 
         let mut new_topic = Topic {
@@ -135,19 +151,40 @@ impl Storage {
         utils::create_file(&format!("{}/{}/decreaser.txt", STORAGE_PATH, topic_encoded), "0").unwrap();
         utils::create_file(&format!("{}/{}/clients/{}.txt", STORAGE_PATH, topic_encoded, client_id_encoded), "0").unwrap();
 
-        return "ACK".to_string();
+        return format!("ACK;0");
     }
 
     pub fn unsub(&mut self, client_id: &str, topic: &str) -> String {
-        if self.topics.contains_key(topic) {
-            let cur_topic = self.topics.get_mut(topic).unwrap();
+        let topic_encoded: String = encode(topic);
+        let client_id_encoded: String = encode(client_id);
 
-            if cur_topic.clients.contains_key(client_id) {
-                let idx = cur_topic.clients.remove(client_id).unwrap();
-                println!("{}", idx);
-                //in this topic all messages from client_idx - decrease factor
-                // will decrease the nr of clients to read
+        if self.topics.contains_key(&topic_encoded) {
+            let cur_topic = self.topics.get_mut(&topic_encoded).unwrap();
 
+            if cur_topic.clients.contains_key(&client_id_encoded) {
+                let idx = cur_topic.clients.remove(&client_id_encoded).unwrap();                
+                utils::remove_file(&format!("{}/{}/clients/{}.txt", STORAGE_PATH, topic_encoded, client_id_encoded)).unwrap();
+
+                let mut idx = idx-cur_topic.decreaser;
+                while idx != cur_topic.messages.len() {
+                    let message = cur_topic.messages[idx].clone();
+                    let mut client_count = message.2;
+                    client_count-=1;
+
+                    if message.2 == 0 {
+                        cur_topic.messages.remove(idx);
+                        utils::remove_file(&format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_encoded, message.0)).unwrap();
+                        cur_topic.decreaser += 1;
+                        continue;
+                    }
+
+
+                    let content = format!("{}\n###\n{}", client_count, message.1);
+                    utils::create_file(&format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_encoded, message.0), &content).unwrap();
+                    idx+=1;
+                }
+                
+                utils::create_file(&format!("{}/{}/decreaser.txt", STORAGE_PATH, topic_encoded), &cur_topic.decreaser.to_string()).unwrap();
                 return "ACK".to_string();
             }
 
