@@ -37,3 +37,19 @@ Subscriptions characterization:
 Subscribers:
 
 - Must have an id
+
+
+## TODO
+
+CLIENT TEAM
+- don't send sub when client already sub
+- upon get verify if client file exist
+- upon unsub remove file
+- client file according with topic -> clients
+
+SERVER TEAM
+
+BROKER TEAM 🤓
+- read file upon start up
+- TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST
+- WRITE REPORT

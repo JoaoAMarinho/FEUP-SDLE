@@ -32,7 +32,7 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
     let res: Vec<&str> = split.collect();
     let info = &res[1..].join(";");
     if res[0] == ERROR {
-        println!("Couldn't retrive message. {}", info);
+        println!("Couldn't retrive message: {}", info);
     } else if res[0] == MESSAGE {
         println!("Message retrived: {}", info);
         let idx: i32 = FromStr::from_str(&idx).unwrap();
@@ -60,7 +60,7 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
     let res: Vec<&str> = split.collect();
     let info = &res[1..].join(";");
     if res[0] == ERROR {
-        println!("Couldn't SUB topic. {}", info);
+        println!("Couldn't SUB topic: {}", info);
     } else {
         utils::create_directory(CLIENT_PATH);
         let file_path = format!("{}/{}",CLIENT_PATH, encode(client_id));
