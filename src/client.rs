@@ -16,11 +16,10 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
 
     let client_id: String = id_arg.unwrap();
     let topic: String = topic_arg.unwrap();
+    //TODO check if file exists
     let file_path = format!("{}/{}",CLIENT_PATH, encode(&client_id));
     let idx = utils::read_file(&file_path);
 
-
-    // TODO add current index to message request (read from file)
     let msg = format!("GET;{};{};{}", client_id, topic, idx);
     let mut response: String = "".to_string(); 
     if utils::timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
@@ -36,7 +35,7 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
     } else if res[0] == MESSAGE {
         println!("Message retrived: {}", info);
         let idx: i32 = FromStr::from_str(&idx).unwrap();
-        utils::create_file(&file_path, &(idx + 1).to_string());
+        utils::create_file(&file_path, &(idx + 1).to_string()).unwrap();
     }
 }
 
@@ -62,10 +61,10 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
     if res[0] == ERROR {
         println!("Couldn't SUB topic: {}", info);
     } else {
-        utils::create_directory(CLIENT_PATH);
+        utils::create_directory(CLIENT_PATH).unwrap();
         let file_path = format!("{}/{}",CLIENT_PATH, encode(client_id));
-        utils::create_file(&file_path, info);
-        println!("Success idx: {}", info);
+        utils::create_file(&file_path, res[0]).unwrap();
+        println!("Success idx: {}", res[0]);
     }
 }
 

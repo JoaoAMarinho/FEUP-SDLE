@@ -3,6 +3,7 @@ use std::fs::File;
 use std::fs;
 use std::io::BufReader;
 use std::io::prelude::*;
+use std::io::ErrorKind;
 use std::time::{SystemTime, UNIX_EPOCH};
 const DEFAULT_TIMEOUT: i64 = 2500;
 const DEFAULT_RETRIES: i32 = 3;
@@ -12,7 +13,7 @@ pub fn timeout_request(msg: &str, address: &str, response: &mut String) -> i32{
     let mut retries = DEFAULT_RETRIES;
 
     let context = zmq::Context::new();
-    let requester = context.socket(zmq::REQ).unwrap();
+    let mut requester = context.socket(zmq::REQ).unwrap();
 
     requester
         .connect(address)
@@ -45,6 +46,7 @@ pub fn timeout_request(msg: &str, address: &str, response: &mut String) -> i32{
         }
 
         println!("Reconnecting...");
+        requester = context.socket(zmq::REQ).unwrap();
         requester
             .connect(address)
             .expect("Failed reconnecting to broker");
@@ -55,13 +57,22 @@ pub fn timeout_request(msg: &str, address: &str, response: &mut String) -> i32{
 }
 
 pub fn create_directory(path: &str) -> std::io::Result<()> {
-    fs::create_dir(path)?;
+    fs::create_dir(path).unwrap_or_else(|error| {
+        if error.kind() != ErrorKind::AlreadyExists {
+            panic!("Problem creating the directory: {:?}", error);
+        }
+    });
     Ok(())
 }
 
 pub fn create_file(path: &str, content: &str) -> std::io::Result<()> {
     let mut file = std::fs::File::create(path)?;
     file.write_all(content.as_bytes())?;
+    Ok(())
+}
+
+pub fn remove_directory(path: &str) -> std::io::Result<()> {
+    std::fs::remove_dir_all(path)?;
     Ok(())
 }
 
