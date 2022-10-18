@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-//use std::fs;
+use std::fs;
 use crate::utils;
 extern crate base64;
 use base64::encode;
@@ -17,24 +17,77 @@ pub struct Storage {
 
 impl Storage {
     pub fn new() -> Storage {
-        // TODO
-        // Read from file and create/build state
-        
-        // let paths = fs::read_dir("./storage").unwrap();
-
-        // for path in paths {
-        //     println!("Name: {}", path.unwrap().path().display())
-        // }
-        return Storage {
+        let mut storage = Storage {
             topics: HashMap::new(),
         };
+        utils::create_directory(STORAGE_PATH).unwrap();
+
+        let topics = fs::read_dir(STORAGE_PATH).unwrap();
+
+        for topic in topics {
+            
+            let topic_name = String::from(topic.unwrap().path().file_name().unwrap().to_str().unwrap());
+
+            let messages_dir = format!("{}/{}/messages", STORAGE_PATH, topic_name);
+            let clients_dir = format!("{}/{}/clients", STORAGE_PATH, topic_name);
+            let decreaser_file = format!("{}/{}/decreaser.txt", STORAGE_PATH, topic_name);
+            
+            let mut messages: Vec<_> = fs::read_dir(messages_dir)
+                                        .unwrap()
+                                        .map(|r| r.unwrap())
+                                        .collect();
+            let clients = fs::read_dir(clients_dir).unwrap();
+
+     
+            messages.sort_by_key(|dir| dir.path());
+
+            let mut messages_vec: Vec<(String, String, usize)> = Vec::new();
+            for message in messages {
+                let message_name = String::from(message.path().with_extension("").file_name().unwrap().to_str().unwrap());
+
+                let message_path = format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_name, message_name);
+                let file_content = utils::read_file(&message_path);
+
+                let message_data = file_content.split("\n###\n");
+                let message_vec: Vec<&str> = message_data.collect();
+                
+                let message_counter = message_vec[0].parse::<usize>().unwrap();
+                let message_content = message_vec[1..].join("\n###\n"); 
+                
+                messages_vec.push((message_name, message_content, message_counter));
+            }
+
+            let mut clients_map: HashMap<String, usize> = HashMap::new();
+            for client in clients {
+                let client_name = String::from(client.unwrap().path().with_extension("").file_name().unwrap().to_str().unwrap());
+
+                let client_path = format!("{}/{}/clients/{}.txt", STORAGE_PATH, topic_name, client_name);
+                let file_content = utils::read_file(&client_path); 
+
+                clients_map.insert(client_name, file_content.parse::<usize>().unwrap());
+            }
+
+            let file_content = utils::read_file(&decreaser_file); 
+            
+
+            let topic = Topic {
+                clients: clients_map,
+                messages: messages_vec,
+                decreaser: file_content.parse::<usize>().unwrap()
+            };
+
+            storage.topics.insert(topic_name, topic);
+
+        }
+
+        return storage;
     }
 
     pub fn put(&mut self, topic: &str, message: &str) -> String {
         let topic_encoded: String = encode(topic);
 
         if !self.topics.contains_key(&topic_encoded) {
-            return format!("Topic '{}' does not exist", topic);
+            return format!("ACK;Topic '{}' does not exist", topic);
         }
 
         let cur_topic = self.topics.get_mut(&topic_encoded).unwrap();
