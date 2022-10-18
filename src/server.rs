@@ -17,5 +17,11 @@ pub fn put(topic_arg: Option<String>, message_arg: Option<String>) {
         eprintln!("Error PUT message.");
         return;
     }
+
+    if response != "" {
+        println!("Couldn't PUT message: {}", response);
+        return;
+    }
+
     println!("Success {}", response);
 }

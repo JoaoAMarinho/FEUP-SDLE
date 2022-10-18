@@ -84,10 +84,21 @@ pub fn unsub(id_arg: Option<String>, topic_arg: Option<String>) {
     let client_id: String = id_arg.unwrap();
     let topic: String = topic_arg.unwrap();
 
+    let file_path = build_file_path(&client_id, &topic);
+    if !file_exist(&file_path) {
+        println!("Client is not subscribed.");
+        return;
+    }
+
     let msg = format!("UNSUB;{};{}", client_id, topic);
     let mut response = "".to_string();
     if utils::timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
         eprintln!("Error UNSUB topic.");
+        return;
+    }
+
+    if response != "" {
+        println!("Couldn't UNSUB topic: {}", response);
         return;
     }
     println!("Success {}", response);
