@@ -1,12 +1,11 @@
-use crate::utils;
+use crate::utils::{self, file_exist};
 extern crate base64;
 use base64::encode;
-use std::str::FromStr;
 
 const BROKER_ADDRESS: &str = "tcp://localhost:5555";
 const ERROR: &str = "ERROR";
 const MESSAGE: &str = "MSG";
-const CLIENT_PATH: &str = "./clients";
+const CLIENTS_FOLDER: &str = "./clients";
 
 pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
     if id_arg == None || topic_arg == None {
@@ -16,11 +15,15 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
 
     let client_id: String = id_arg.unwrap();
     let topic: String = topic_arg.unwrap();
-    //TODO check if file exists
-    let file_path = format!("{}/{}",CLIENT_PATH, encode(&client_id));
-    let idx = utils::read_file(&file_path);
 
-    let msg = format!("GET;{};{};{}", client_id, topic, idx);
+    let idx = get_curr_index(&client_id, &topic);
+
+    if idx < 0 {
+        println!("Topic not subscribed by the client.");
+        return;
+    }
+
+    let msg = format!("GET;{};{};{}", client_id, topic, &idx.to_string());
     let mut response: String = "".to_string(); 
     if utils::timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
         eprintln!("Error GET message.");
@@ -34,8 +37,7 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
         println!("Couldn't retrive message: {}", info);
     } else if res[0] == MESSAGE {
         println!("Message retrived: {}", info);
-        let idx: i32 = FromStr::from_str(&idx).unwrap();
-        utils::create_file(&file_path, &(idx + 1).to_string()).unwrap();
+        update_curr_index(&client_id, &topic, idx + 1);
     }
 }
 
@@ -48,6 +50,13 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
     let client_id: String = id_arg.unwrap();
     let topic: String = topic_arg.unwrap();
 
+    let file_path = build_file_path(&client_id, &topic);
+    if file_exist(&file_path) {
+        println!("Client already subscribed.");
+        return;
+    }
+
+
     let msg = format!("SUB;{};{}", client_id, topic);
     let mut response = "".to_string();
     if utils::timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
@@ -57,15 +66,13 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
 
     let split = response.split(";");
     let res: Vec<&str> = split.collect();
-    let info = &res[1..].join(";");
     if res[0] == ERROR {
+        let info = &res[1..].join(";");
         println!("Couldn't SUB topic: {}", info);
-    } else {
-        utils::create_directory(CLIENT_PATH).unwrap();
-        let file_path = format!("{}/{}",CLIENT_PATH, encode(client_id));
-        utils::create_file(&file_path, res[0]).unwrap();
-        println!("Success idx: {}", res[0]);
+        return;
     }
+    update_curr_index(&client_id, &topic, res[0].parse().unwrap());
+    println!("Success, idx: {}", res[0]);
 }
 
 pub fn unsub(id_arg: Option<String>, topic_arg: Option<String>) {
@@ -84,18 +91,30 @@ pub fn unsub(id_arg: Option<String>, topic_arg: Option<String>) {
         return;
     }
     println!("Success {}", response);
-    //TODO delete file according to msg
+    remove_curr_index(&client_id, &topic);
 }
 
-// fn get_curr_index() {
-//     //sets the option to create a new file, failing if it already exists
-//     let file = OpenOptions::new().write(true).open("");
-//     if file.is_ok() { }
-// }
+fn get_curr_index(client_id: &str, topic: &str) -> i32 {
+    let file_path = build_file_path(client_id, topic);
+    if !utils::file_exist(&file_path) {
+        return -1;
+    }
+    return utils::read_file(&file_path).parse().unwrap();
+}
 
-// fn update_curr_index() {
-//     //sets the option to create a new file, failing if it already exists
-//     let file = OpenOptions::new().write(true).open("");
-//     if file.is_ok() { }
+fn update_curr_index(client_id: &str, topic: &str, idx: i32) {
+    utils::create_directory(CLIENTS_FOLDER).unwrap();
+    let client_path = format!("{}/{}",CLIENTS_FOLDER, encode(client_id));
+    utils::create_directory(&client_path).unwrap();
+    let file_path = build_file_path(client_id, topic);
+    utils::create_file(&file_path, &idx.to_string()).unwrap();
+}
 
-// }
+fn remove_curr_index(client_id: &str, topic: &str) {
+    let file_path = build_file_path(client_id, topic);
+    utils::remove_file(&file_path).unwrap();
+}
+
+fn build_file_path(client_id: &str, topic: &str) -> String {
+    format!("{}/{}/{}",CLIENTS_FOLDER, encode(client_id), encode(topic))
+}

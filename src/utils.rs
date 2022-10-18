@@ -5,6 +5,8 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use std::io::ErrorKind;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::path::Path;
+
 const DEFAULT_TIMEOUT: i64 = 2500;
 const DEFAULT_RETRIES: i32 = 3;
 const ACKNOWLEDGE: &str = "ACK";
@@ -72,12 +74,16 @@ pub fn create_file(path: &str, content: &str) -> std::io::Result<()> {
 }
 
 pub fn remove_directory(path: &str) -> std::io::Result<()> {
-    std::fs::remove_dir_all(path)?;
+    if file_exist(path){
+        std::fs::remove_dir_all(path)?;
+    }
     Ok(())
 }
 
 pub fn remove_file(path: &str) -> std::io::Result<()> {
-    fs::remove_file(path)?;
+    if file_exist(path){
+        fs::remove_file(path)?;
+    }
     Ok(())
 }
 
@@ -89,6 +95,10 @@ pub fn read_file(path: &str) -> String {
     buf_reader.read_to_string(&mut contents).unwrap();
 
     return contents;
+}
+
+pub fn file_exist(path: &str) -> bool {
+    Path::new(path).exists()
 }
 
 pub fn get_timestamp() -> u64 {

@@ -42,10 +42,6 @@ Subscribers:
 ## TODO
 
 CLIENT TEAM
-- don't send sub when client already sub
-- upon get verify if client file exist
-- upon unsub remove file
-- client file according with topic -> clients
 
 SERVER TEAM
 
