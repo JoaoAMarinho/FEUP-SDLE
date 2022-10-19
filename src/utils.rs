@@ -16,7 +16,8 @@ pub fn timeout_request(msg: &str, address: &str, response: &mut String) -> i32{
 
     let context = zmq::Context::new();
     let mut requester = context.socket(zmq::REQ).unwrap();
-
+    requester.set_linger(0).unwrap();
+    
     requester
         .connect(address)
         .expect("Failed connecting to broker");
@@ -49,6 +50,8 @@ pub fn timeout_request(msg: &str, address: &str, response: &mut String) -> i32{
 
         println!("Reconnecting...");
         requester = context.socket(zmq::REQ).unwrap();
+        requester.set_linger(0).unwrap();
+
         requester
             .connect(address)
             .expect("Failed reconnecting to broker");
