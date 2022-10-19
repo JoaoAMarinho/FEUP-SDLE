@@ -90,7 +90,7 @@ impl Storage {
 
         }
 
-        return storage;
+        storage
     }
 
     /// Returns a person with the name given them
@@ -107,7 +107,7 @@ impl Storage {
 
         let cur_topic = self.topics.get_mut(&topic_encoded).unwrap();
 
-        if cur_topic.clients.len() == 0 {
+        if cur_topic.clients.is_empty() {
             return "ACK".to_string();
         }
         
@@ -128,7 +128,7 @@ impl Storage {
 
         cur_topic.messages.push(new_message);
 
-        return "ACK".to_string();
+        "ACK".to_string()
     }
 
     pub fn get(&mut self, client_id: &str, topic: &str, index: &str) -> String {
@@ -188,10 +188,10 @@ impl Storage {
             );   
         }
 
-        return format!(
+        format!(
             "ACK;ERROR; Topic '{}' does not exist",
             topic
-        ); 
+        )
     }
 
     pub fn sub(&mut self, client_id: &str, topic: &str) -> String {
@@ -236,7 +236,7 @@ impl Storage {
         utils::create_file(&format!("{}/{}/decreaser.txt", STORAGE_PATH, topic_encoded), "0").unwrap();
         utils::create_file(&format!("{}/{}/clients/{}.txt", STORAGE_PATH, topic_encoded, client_id_encoded), "0").unwrap();
 
-        return format!("ACK;0");
+        "ACK;0".to_string()
     }
 
     pub fn unsub(&mut self, client_id: &str, topic: &str) -> String {
@@ -249,7 +249,7 @@ impl Storage {
             if cur_topic.clients.contains_key(&client_id_encoded) {
                 let idx = cur_topic.clients.remove(&client_id_encoded).unwrap();
                 
-                if cur_topic.clients.len() == 0 {
+                if cur_topic.clients.is_empty() {
                     self.topics.remove(&topic_encoded);
                     utils::remove_directory(&format!("{}/{}", STORAGE_PATH, topic_encoded)).unwrap();
                     return "ACK".to_string();
@@ -286,10 +286,10 @@ impl Storage {
             );
         }
 
-        return format!(
+        format!(
             "ACK;Topic '{}' does not exist",
             topic
-        );     
+        )    
     }
 
 }

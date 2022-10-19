@@ -32,7 +32,7 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
             return;
         }
     
-        let split = response.split(";");
+        let split = response.split(';');
         let res: Vec<&str> = split.collect();
         let info = &res[1..].join(";");
         if res[0] == ERROR {
@@ -72,7 +72,7 @@ pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
         return;
     }
 
-    let split = response.split(";");
+    let split = response.split(';');
     let res: Vec<&str> = split.collect();
     if res[0] == ERROR {
         let info = &res[1..].join(";");
@@ -105,7 +105,7 @@ pub fn unsub(id_arg: Option<String>, topic_arg: Option<String>) {
         return;
     }
 
-    if response != "" {
+    if !response.is_empty() {
         println!("Couldn't UNSUB topic: {}", response);
         return;
     }
@@ -118,7 +118,7 @@ fn get_curr_index(client_id: &str, topic: &str) -> i32 {
     if !utils::file_exist(&file_path) {
         return -1;
     }
-    return utils::read_file(&file_path).parse().unwrap();
+    utils::read_file(&file_path).parse().unwrap()
 }
 
 fn update_curr_index(client_id: &str, topic: &str, idx: i32) {

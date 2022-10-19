@@ -18,7 +18,7 @@ pub fn put(topic_arg: Option<String>, message_arg: Option<String>) {
         return;
     }
 
-    if response != "" {
+    if !response.is_empty() {
         println!("Couldn't PUT message: {}", response);
         return;
     }

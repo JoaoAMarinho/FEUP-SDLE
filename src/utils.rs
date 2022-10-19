@@ -27,7 +27,7 @@ pub fn timeout_request(msg: &str, address: &str, response: &mut String) -> i32{
     while retries > 0 {
         if requester.poll(zmq::POLLIN, DEFAULT_TIMEOUT).unwrap() != 0 {
             let res = requester.recv_string(0).unwrap().unwrap();
-            let split = res.split(";");
+            let split = res.split(';');
             let res: Vec<&str> = split.collect();
             if res[0] == ACKNOWLEDGE {
                 if res.len() > 1 {
@@ -58,7 +58,7 @@ pub fn timeout_request(msg: &str, address: &str, response: &mut String) -> i32{
         requester.send(msg, 0).unwrap();
     }
 
-    return 0;
+    0
 }
 
 pub fn create_directory(path: &str) -> std::io::Result<()> {
@@ -97,7 +97,7 @@ pub fn read_file(path: &str) -> String {
     let mut contents = String::new();
     buf_reader.read_to_string(&mut contents).unwrap();
 
-    return contents;
+    contents
 }
 
 pub fn file_exist(path: &str) -> bool {

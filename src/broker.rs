@@ -39,7 +39,7 @@ pub fn start() {
 
 fn parse_message(msg: &str, storage: &mut Storage) -> String {
 
-    let split = msg.split(";");
+    let split = msg.split(';');
     let vec: Vec<&str> = split.collect();
 
     let response = match vec[0] {
@@ -63,5 +63,5 @@ fn parse_message(msg: &str, storage: &mut Storage) -> String {
     };
 
     println!("Sent '{}' as a response", response);
-    return response;
+    response
 }
