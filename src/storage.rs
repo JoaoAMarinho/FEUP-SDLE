@@ -121,7 +121,7 @@ impl Storage {
                 
                 if cur_topic.messages.is_empty() {
                     return format!(
-                        "ACK;ERROR;Topic '{}' has no messages to consume",
+                        "ACK;WAIT;Topic '{}' has no messages to consume",
                         topic
                     );  
                 }
@@ -153,7 +153,7 @@ impl Storage {
 
                 if messages.is_empty() || (*idx - cur_topic.decreaser) >= messages.len() {
                     return format!(
-                        "ACK;ERROR;Topic '{}' has no messages to consume",
+                        "ACK;WAIT;Topic '{}' has no messages to consume",
                         topic
                     );  
                 }

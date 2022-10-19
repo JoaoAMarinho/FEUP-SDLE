@@ -1,10 +1,12 @@
 use crate::utils::{self, file_exist};
 extern crate base64;
 use base64::encode;
+use std::{thread, time};
 
 const BROKER_ADDRESS: &str = "tcp://localhost:5555";
 const ERROR: &str = "ERROR";
 const MESSAGE: &str = "MSG";
+const WAIT: &str = "WAIT";
 const CLIENTS_FOLDER: &str = "./clients";
 
 pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
@@ -15,30 +17,36 @@ pub fn get(id_arg: Option<String>, topic_arg: Option<String>) {
 
     let client_id: String = id_arg.unwrap();
     let topic: String = topic_arg.unwrap();
-
     let idx = get_curr_index(&client_id, &topic);
 
     if idx < 0 {
         println!("Topic not subscribed by the client.");
         return;
     }
-
     let msg = format!("GET;{};{};{}", client_id, topic, &idx.to_string());
-    let mut response: String = "".to_string(); 
-    if utils::timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
-        eprintln!("Error GET message.");
-        return;
+
+    loop {
+        let mut response: String = "".to_string(); 
+        if utils::timeout_request(&msg, BROKER_ADDRESS, &mut response) != 0 {
+            eprintln!("Error GET message.");
+            return;
+        }
+    
+        let split = response.split(";");
+        let res: Vec<&str> = split.collect();
+        let info = &res[1..].join(";");
+        if res[0] == ERROR {
+            println!("Couldn't retrive message: {}", info);
+            return;
+        } else if res[0] == WAIT {
+            thread::sleep(time::Duration::from_millis(500));
+        } else if res[0] == MESSAGE {
+            update_curr_index(&client_id, &topic, idx + 1);
+            println!("Message retrived: {}", info);
+            return;
+        }
     }
 
-    let split = response.split(";");
-    let res: Vec<&str> = split.collect();
-    let info = &res[1..].join(";");
-    if res[0] == ERROR {
-        println!("Couldn't retrive message: {}", info);
-    } else if res[0] == MESSAGE {
-        println!("Message retrived: {}", info);
-        update_curr_index(&client_id, &topic, idx + 1);
-    }
 }
 
 pub fn sub(id_arg: Option<String>, topic_arg: Option<String>) {
