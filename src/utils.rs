@@ -101,7 +101,7 @@ pub fn file_exist(path: &str) -> bool {
     Path::new(path).exists()
 }
 
-pub fn get_timestamp() -> u64 {
+pub fn get_timestamp() -> u128 {
     let start = SystemTime::now();
-    start.duration_since(UNIX_EPOCH).unwrap().as_secs()
+    start.duration_since(UNIX_EPOCH).unwrap().as_millis()
 }

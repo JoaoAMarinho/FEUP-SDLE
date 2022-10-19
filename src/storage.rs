@@ -96,8 +96,14 @@ impl Storage {
             return "ACK".to_string();
         }
         
+        let mut timestamp = utils::get_timestamp().to_string();
+        
+        while utils::file_exist(&format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_encoded, &timestamp)) {
+            timestamp = utils::get_timestamp().to_string();
+        }
+
         let new_message = (
-            utils::get_timestamp().to_string(),
+            timestamp,
             message.to_string(),
             cur_topic.clients.len(),
         );
