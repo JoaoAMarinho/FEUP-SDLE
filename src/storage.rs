@@ -5,17 +5,27 @@ extern crate base64;
 use base64::encode;
 
 const STORAGE_PATH: &str = "./storage";
+
+/// Topic structure
 struct Topic {
+    /// Topic clients represented by their encoded ID and current message index 
     clients: HashMap<String, usize>,
+
+    /// Topic messages vector containing each message filename (timestamp), content and number of possible readers
     messages: Vec<(String, String, usize)>,
+
+    /// Number of messages removed from the messages vector
     decreaser: usize,
 }
 
+/// Storage structure
 pub struct Storage {
+    /// Storage topics represented by their encoded ID and respective Topic struct
     topics: HashMap<String, Topic>,
 }
 
 impl Storage {
+    /// Returns a storage with the state updated from persist memory
     pub fn new() -> Storage {
         let mut storage = Storage {
             topics: HashMap::new(),
@@ -83,6 +93,11 @@ impl Storage {
         return storage;
     }
 
+    /// Returns a person with the name given them
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - A string slice that holds the name of the person
     pub fn put(&mut self, topic: &str, message: &str) -> String {
         let topic_encoded: String = encode(topic);
 
@@ -96,8 +111,14 @@ impl Storage {
             return "ACK".to_string();
         }
         
+        let mut timestamp = utils::get_timestamp().to_string();
+        
+        while utils::file_exist(&format!("{}/{}/messages/{}.txt", STORAGE_PATH, topic_encoded, &timestamp)) {
+            timestamp = utils::get_timestamp().to_string();
+        }
+
         let new_message = (
-            utils::get_timestamp().to_string(),
+            timestamp,
             message.to_string(),
             cur_topic.clients.len(),
         );
