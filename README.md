@@ -1,6 +1,6 @@
 # Assignment 1 - Reliable Pub/Sub Service
 
-SDLE First Assignment of group T&lt;m&gt;&lt;n&gt;G&lt;p&gt;&lt;q&gt;.
+SDLE First Assignment of group T04G12.
 
 Group members:
 
@@ -32,7 +32,7 @@ cargo build
 
 In order to start the subscriber/publisher please run the following command from the `root` folder:
 ```
-cargo run <command> [-i <id>] [-t <topic>] [-m <message>] -- 
+cargo run -- <command> [-i <id>] [-t <topic>] [-m <message>]
 ```
 
 
@@ -46,5 +46,5 @@ Where:
 
 In order to start the broker please run the following command from the `root` folder:
 ```
-cargo run broker --
+cargo run -- broker
 ```
