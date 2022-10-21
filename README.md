@@ -18,33 +18,30 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 [full documentation here](https://www.rust-lang.org/tools/install)
 
-
-## Compilation
-
-In order to compile the source code, please run the following command from the `root` folder:
-```
-cargo build
-```
-
 ## Execution
+
+A pre-compiled executable is available in the `bin` folder with the name, `proj1`. For any help execute the following instruction:
+
+```sh
+./bin/proj1 -h
+```
 
 ### Subscriber/Publisher
 
 In order to start the subscriber/publisher please run the following command from the `root` folder:
+```sh
+./bin/proj1 <command> [-i <id>] [-t <topic>] [-m <message>]
 ```
-cargo run -- <command> [-i <id>] [-t <topic>] [-m <message>]
-```
-
 
 Where:
-- `<command>` is either GET, PUT, SUB or UNSUB.
+- `<command>` is either get, put, sub or unsub (lowercase only).
 - `<id>` is the client's ID.
 - `<topic>` is the topic's name.
-- `<message>` is the message sent on the PUT operation.
+- `<message>` is the message sent on the put operation.
 
-### Subscriber/Publisher
+### Service
 
-In order to start the broker please run the following command from the `root` folder:
-```
-cargo run -- broker
+In order to start the service please run the following command from the `root` folder:
+```sh
+./bin/proj1 broker
 ```
