@@ -1,6 +1,7 @@
 // server/index.js
 
-const express = require("express");
+import express from "express";
+import node from "./src/node.js";
 
 const PORT = process.env.PORT || 3001;
 
@@ -13,3 +14,5 @@ app.get("/api", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
 });
+
+node();
