@@ -1,6 +1,7 @@
 // server/index.js
-const express = require("express");
-const cors = require('cors')
+import express from 'express';
+import cors from 'cors';
+import {createlibp2p} from "libp2p";
 
 const PORT = process.env.PORT || 3001;
 
@@ -9,8 +10,16 @@ app.use(cors())
 
 app.get("/api", (req, res) => {
   res.json({ message: "Hello from server!" });
+
 });
 
 app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
 });
+
+const startPeer = () => {
+  let peer = ""
+
+
+  return peer
+}
