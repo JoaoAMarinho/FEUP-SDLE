@@ -25,7 +25,7 @@ export default async function node() {
         console.log(err)
     })
 
-    return await createNode(peerId)
+    node = await createNode(peerId)
 
     // node.addEventListener('peer:discovery', (event) => {
     //     // No need to dial, autoDial is on
@@ -34,6 +34,7 @@ export default async function node() {
     // })
     // // console.log(data)
     // register(node, "/key", "test")
+    return node
 }
 
 const createNode = async (peerId) => {

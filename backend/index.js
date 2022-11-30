@@ -21,6 +21,7 @@ const loginHandler = async (req, res) => {
     message: "Login user",
     port: createPort()
   })
+  node()
 }
 
 const logoutHandler = async (req, res) => {}
@@ -59,18 +60,6 @@ const setupRoutes = (app) => {
   app.get("/profile", profileHandler);
 }
 
-const app = express();
-app.use(cors());
-
-// app.get("/api", (req, res) => {
-//   res.json({ port: createPort() });
-// });
-setupRoutes(app)
-
-const backend = app.listen(PORT, () => {
-  console.log(`Backend listening on ${backend.address().port}`);
-});
-
 const createPort = () => {
   const app = express();
   app.use(cors());
@@ -83,3 +72,14 @@ const createPort = () => {
   
   return backend.address().port;
 }
+
+const app = express();
+app.use(cors());
+
+setupRoutes(app)
+
+const backend = app.listen(PORT, () => {
+  console.log(`Backend listening on ${backend.address().port}`);
+});
+
+

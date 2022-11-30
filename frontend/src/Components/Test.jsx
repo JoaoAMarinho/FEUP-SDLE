@@ -40,10 +40,10 @@ export default function Test(){
     return(
         <>
             <button onClick={handleClick}>
-                Button
+                Register
             </button>
             <button onClick={handleClick2}>
-                Button2
+                Login
             </button>
             <div>
                 {"Port: " + port}
