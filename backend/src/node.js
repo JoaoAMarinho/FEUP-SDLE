@@ -8,6 +8,7 @@ import PeerId from "peer-id";
 import { str2array, array2str } from "./utils.js";
 import fs from "fs";
 import { createHash } from 'crypto';
+import { exec } from "child_process";
 
 const bootstrapers = [
   "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
@@ -18,7 +19,7 @@ const bootstrapers = [
   "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
 ];
 
-export async function node() {
+export async function nodeThings() {
   const peerId = await PeerId.create();
 
   const peerIdJson = JSON.stringify(peerId.toJSON());
@@ -40,7 +41,9 @@ export async function node() {
 
 export const createNode = async (peerId = null) => {
   if (peerId === null) {
+    console.log("oi")
     peerId = await PeerId.create();
+    console.log(peerId)
   }
 
   const node = await createLibp2p({
@@ -80,15 +83,20 @@ const stopNode = async (node) => {
   console.log("libp2p has stopped");
 };
 
-export const login = async (node, username) => {
-  node.contentRouting
-    .get(str2array(username))
-    .then((data) => {
-      console.log("login data: ", array2str(data));
-    })
-    .catch((err) => {
-      console.log("login error: ", err);
-    });
+export const login = async (node, username, password) => {
+  password = createHash("sha256").update(password).digest("hex");
+
+  try {
+      data = await node.contentRouting.get(str2array(username))
+      content = JSON.parse(data)
+      if (content.password !== password) {
+        return { error: "Invalid password!" };
+      }
+      exec(`npm start --username ${username}`);
+      
+  } catch (_) {
+    return { error: "Username does not exist!" };
+  }
 };
 
 export const register = async (node, username, password) => {
@@ -102,7 +110,9 @@ export const register = async (node, username, password) => {
   }
 
   password = createHash('sha256').update(password).digest('hex');
+  const peerId = await PeerId.create();
   content = {
+    peerId: peerId.toJSON(),
     password: password,
   };
 
@@ -119,6 +129,7 @@ export const register = async (node, username, password) => {
 const node = {
   register,
   login,
+  createNode,
 };
 
 export default node;
