@@ -5,8 +5,8 @@ export default function Test(){
     const [port, setPort] = useState(3001);
     
     const handleClick = () => {
-        console.log("click")
-        api.get("", port).then((res) => {
+        console.log("register")
+        api.post("register/", port).then((res) => {
             console.log("response", res.data);
             const newPort = res.data.port;
             sessionStorage.setItem("port", newPort);
@@ -18,9 +18,12 @@ export default function Test(){
     };
 
     const handleClick2 = () => {
-        console.log("click2")
-        api.get("", port).then((res) => {
+        console.log("login")
+        api.post("login/", port).then((res) => {
             console.log("response", res.data)
+            const newPort = res.data.port;
+            sessionStorage.setItem("port", newPort);
+            setPort(newPort);
         })
         .catch((err) => {
             console.log("Error:" + err);
@@ -42,6 +45,9 @@ export default function Test(){
             <button onClick={handleClick2}>
                 Button2
             </button>
+            <div>
+                {"Port: " + port}
+            </div>
         </>
     )
 }

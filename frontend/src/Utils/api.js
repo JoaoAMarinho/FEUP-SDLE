@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // const BACKEND_SERVER = `${process.env.REACT_APP_BACKEND_HOST}:${process.env.REACT_APP_BACKEND_PORT}/api/`;
-const BACKEND_SERVER = `localhost:3001/api/`;
+// const BACKEND_SERVER = `localhost:3001/`;
 
 // Get request with authentication
 export async function get(route, port, payload = {}) {
@@ -13,7 +13,7 @@ export async function get(route, port, payload = {}) {
     };
 
     return axios.get(
-        `http://localhost:${port}/api/${route}`,
+        `http://localhost:${port}/${route}`,
         {
             ...payload,
         },
@@ -22,7 +22,7 @@ export async function get(route, port, payload = {}) {
 }
 
 // Post request with authentication
-export async function post(route, payload = {}) {
+export async function post(route, port, payload = {}) {
     const config = {
         headers: {
             Accept: "application/json",
@@ -31,7 +31,7 @@ export async function post(route, payload = {}) {
     };
 
     return axios.post(
-        `http://${BACKEND_SERVER}${route}`,
+        `http://localhost:${port}/${route}`,
         {
             ...payload,
         },

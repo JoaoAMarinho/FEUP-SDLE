@@ -6,38 +6,22 @@ import cors from 'cors'
 
 const PORT = process.env.PORT || 3001;
 
-// let currentNode = null;
-// node().then(result => { currentNode = result }); 
-
-const app = express();
-app.use(cors());
-
-app.get("/api", (req, res) => {
-  res.json({ port: createPort() });
-});
-
-const backend = app.listen(PORT, () => {
-  console.log(`Backend listening on ${backend.address().port}`);
-});
-
-const createPort = () => {
-  const app = express();
-  app.use(cors());
-
-  const backend = app.listen(0, () => {
-    console.log(`Backend listening on ${backend.address().port}`);
-  });
-
-  setupRoutes(app);
-  
-  return backend.address().port;
-}
 
 // REQUEST HANDLERS 
 
-const registerHandler = async (req, res) => {}
+const registerHandler = async (req, res) => {
+  res.status(200).json({
+    message: "Registe user",
+    port: createPort()
+  })
+}
 
-const loginHandler = async (req, res) => {}
+const loginHandler = async (req, res) => {
+  res.status(200).json({
+    message: "Login user",
+    port: createPort()
+  })
+}
 
 const logoutHandler = async (req, res) => {}
 
@@ -45,7 +29,11 @@ const followHandler = async (req, res) => {}
 
 const unfollowHandler = async (req, res) => {}
 
-const feedHandler = async (req, res) => {}
+const feedHandler = async (req, res) => {
+  res.status(200).json({
+    message: "Getting feed",
+  })
+}
 
 const userHandler = async (req, res) => {}
 
@@ -69,4 +57,29 @@ const setupRoutes = (app) => {
   app.get("/feed", feedHandler);
   app.get("/user", userHandler);
   app.get("/profile", profileHandler);
+}
+
+const app = express();
+app.use(cors());
+
+// app.get("/api", (req, res) => {
+//   res.json({ port: createPort() });
+// });
+setupRoutes(app)
+
+const backend = app.listen(PORT, () => {
+  console.log(`Backend listening on ${backend.address().port}`);
+});
+
+const createPort = () => {
+  const app = express();
+  app.use(cors());
+
+  const backend = app.listen(0, () => {
+    console.log(`Backend listening on ${backend.address().port}`);
+  });
+
+  setupRoutes(app);
+  
+  return backend.address().port;
 }
