@@ -4,7 +4,7 @@ import { noise } from "@chainsafe/libp2p-noise";
 import { mplex } from "@libp2p/mplex";
 import { kadDHT } from "@libp2p/kad-dht";
 import { bootstrap } from "@libp2p/bootstrap";
-import PeerId from "peer-id";
+import { createRSAPeerId } from '@libp2p/peer-id-factory'
 import { str2array, array2str } from "./utils.js";
 import fs from "fs";
 import { createHash } from 'crypto';
@@ -20,7 +20,7 @@ const bootstrapers = [
 ];
 
 export async function nodeThings() {
-  const peerId = await PeerId.create();
+  const peerId = await createRSAPeerId()
 
   const peerIdJson = JSON.stringify(peerId.toJSON());
   fs.writeFile("peer.txt", peerIdJson, (err) => {
@@ -40,14 +40,13 @@ export async function nodeThings() {
 }
 
 export const createNode = async (peerId = null) => {
+  let peer = {}
   if (peerId === null) {
-    console.log("oi")
-    peerId = await PeerId.create();
-    console.log(peerId)
+    peer = await createRSAPeerId()
   }
 
   const node = await createLibp2p({
-    peerId: peerId,
+    peerId: peer,
     addresses: {
       // add a listen address (localhost) to accept TCP connections on a random port
       listen: ["/ip4/127.0.0.1/tcp/0"],
