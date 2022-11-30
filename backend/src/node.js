@@ -5,7 +5,7 @@ import { mplex } from '@libp2p/mplex';
 import { kadDHT } from '@libp2p/kad-dht'
 import { bootstrap } from '@libp2p/bootstrap'
 import PeerId from 'peer-id'
-import { str2array } from './utils.js';
+import { str2array, array2str } from './utils.js';
 import fs from 'fs';
 
 const bootstrapers = [
@@ -28,9 +28,11 @@ export default async function node() {
     node.addEventListener('peer:discovery', (evt) => {
         // No need to dial, autoDial is on
         console.log('Discovered:', evt.detail.id.toString())
+        login(node, "/key")
     })
     // console.log(data)
-    // getPassword(node, "key")
+    register(node, "/key", "test")
+    
 }
 
 const createNode = async () => {
@@ -70,12 +72,22 @@ const stopNode = async (node) => {
     console.log('libp2p has stopped')
 }
 
-const getPassword = async (node, username) => {
-    node.contentRouting.get(str2array(username))
+const login = async (node, username) => {
+    node.contentRouting.get(str2array(username))2
     .then((data) => {
-        console.log(data)
+        console.log("login data: ", array2str(data))
     })
     .catch((err) => {
-        console.log(err)
+        console.log("login error: ", err)
+    })
+}
+
+const register = async (node, username, password) => {
+    node.contentRouting.put(str2array(username), str2array(password))
+    .then((data) => {
+        console.log("register data: ", data)
+    })
+    .catch((err) => {
+        console.log("register error: ", err)
     })
 }
