@@ -18,25 +18,27 @@ const bootstrapers = [
   ]
 
 export default async function node() {
-    const peer = await PeerId.create()
-    const peerJson = JSON.stringify(peer.toJSON())
-    fs.writeFile("peer.txt", peerJson, (err) => {
+    const peerId = await PeerId.create()
+
+    const peerIdJson = JSON.stringify(peerId.toJSON())
+    fs.writeFile("peer.txt", peerIdJson, (err) => {
         console.log(err)
     })
-    let node = await createNode()
 
-    node.addEventListener('peer:discovery', (evt) => {
-        // No need to dial, autoDial is on
-        console.log('Discovered:', evt.detail.id.toString())
-        login(node, "/key")
-    })
-    // console.log(data)
-    register(node, "/key", "test")
-    
+    return await createNode(peerId)
+
+    // node.addEventListener('peer:discovery', (event) => {
+    //     // No need to dial, autoDial is on
+    //     console.log('Discovered:', event.detail.id.toString())
+    //     login(node, "/key")
+    // })
+    // // console.log(data)
+    // register(node, "/key", "test")
 }
 
-const createNode = async () => {
+const createNode = async (peerId) => {
     const node = await createLibp2p({
+        // peerId: peerId,
         addresses: {
             // add a listen address (localhost) to accept TCP connections on a random port
             listen: ['/ip4/127.0.0.1/tcp/0']
@@ -73,7 +75,7 @@ const stopNode = async (node) => {
 }
 
 const login = async (node, username) => {
-    node.contentRouting.get(str2array(username))2
+    node.contentRouting.get(str2array(username))
     .then((data) => {
         console.log("login data: ", array2str(data))
     })

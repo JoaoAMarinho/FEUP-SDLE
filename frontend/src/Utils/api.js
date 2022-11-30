@@ -4,7 +4,7 @@ import axios from "axios";
 const BACKEND_SERVER = `localhost:3001/api/`;
 
 // Get request with authentication
-export async function get(route, payload = {}) {
+export async function get(route, port, payload = {}) {
     const config = {
         headers: {
             Accept: "application/json",
@@ -13,7 +13,7 @@ export async function get(route, payload = {}) {
     };
 
     return axios.get(
-        `http://${BACKEND_SERVER}${route}`,
+        `http://localhost:${port}/api/${route}`,
         {
             ...payload,
         },
