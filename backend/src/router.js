@@ -5,9 +5,11 @@ import bodyParser from "body-parser";
 export default class Router {
     // REQUEST HANDLERS
     static async registerHandler(node, req, res) {
+        console.log("register")
         const { username, password } = req.body;
 
         const response = await node.register(username, password);
+        console.log(response)
 
         if (response.error) return res.status(400).json(response);
 
@@ -17,6 +19,7 @@ export default class Router {
     }
 
     static async loginHandler(node, req, res) {
+        console.log("login")
         const { username, password } = req.body;
         const response = await node.login(username, password);
         console.log(response);
