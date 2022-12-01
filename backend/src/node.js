@@ -4,7 +4,7 @@ import { noise } from "@chainsafe/libp2p-noise";
 import { mplex } from "@libp2p/mplex";
 import { kadDHT } from "@libp2p/kad-dht";
 import { bootstrap } from "@libp2p/bootstrap";
-import { createRSAPeerId } from '@libp2p/peer-id-factory'
+import { createRSAPeerId, createFromJSON, exportToProtobuf, createFromProtobuf } from '@libp2p/peer-id-factory'
 import { str2array, array2str } from "./utils.js";
 import fs from "fs";
 import { createHash } from 'crypto';
@@ -21,8 +21,10 @@ const bootstrapers = [
 
 export class Node{
 
-  constructor(port) {
+  constructor(port, username) {
+    
     this.createNode()
+    this.username = username
 
     this.port = createPort(this, port)    
   }
@@ -47,14 +49,9 @@ export class Node{
     return node;
   }
 
-  createNode = async (peerId = null) => {
-    let peer = {}
-    if (peerId === null) {
-      peer = await createRSAPeerId()
-    }
+  createNode = async () => {
 
     this.node = await createLibp2p({
-      peerId: peer,
       addresses: {
         // add a listen address (localhost) to accept TCP connections on a random port
         listen: ["/ip4/127.0.0.1/tcp/0"],
@@ -98,7 +95,8 @@ export class Node{
         if (content.password !== password) {
           return { error: "Invalid password!" };
         }
-        res = new Node(0).port
+        // TODO fix this must not be a return from the method port,  and username should not be passed like this I think!!
+        res = new Node(0,username).port
         
     } catch (err) {
       console.log(err)
@@ -120,22 +118,12 @@ export class Node{
     }
 
     password = createHash('sha256').update(password).digest('hex');
-    const peerId = await createRSAPeerId()
     const content = {
-      peerId: peerId.toJSON(),
       password: password,
     };
 
-    const val = await this.node.contentRouting.put(usernameArray, str2array(JSON.stringify(content)))
-    console.log(val)
+    await this.node.contentRouting.put(usernameArray, str2array(JSON.stringify(content)))
     return {}
-      // .then((_) => {
-      //   return { data: "Successful register." };
-      // })
-      // .catch((err) => {
-      //   console.log(err)
-      //   // do nothing
-      // });
   };
 
 }
