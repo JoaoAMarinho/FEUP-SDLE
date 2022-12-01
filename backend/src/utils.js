@@ -14,5 +14,9 @@ export function str2array(str) {
     for (var i = 0, strLen = str.length; i < strLen; i++) {
         bufView[i] = str.charCodeAt(i);
     }
-    return new Uint8Array(bufView.buffer, bufView.byteOffset, bufView.byteLength);
+    return new Uint8Array(
+        bufView.buffer,
+        bufView.byteOffset,
+        bufView.byteLength
+    );
 }
