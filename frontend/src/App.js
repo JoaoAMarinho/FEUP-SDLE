@@ -1,15 +1,24 @@
 import React from "react";
 import "./App.css";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate,
+} from "react-router-dom";
+import Login from "./Pages/Login";
 import Test from "./Components/Test";
 
 function App() {
     return (
-        <div className="App">
-            <header className="App-header">
-                <div>
-                    <Test />
-                </div>
-            </header>
+        <div>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<Test />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+            </BrowserRouter>
         </div>
     );
 }

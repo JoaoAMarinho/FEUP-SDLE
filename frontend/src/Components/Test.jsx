@@ -7,12 +7,9 @@ export default function Test() {
 
     const handleRegister = () => {
         console.log("register");
-        api.post("register/", port, { username: "test", password: "test" })
+        api.post("register/", port, { username: "test2", password: "test" })
             .then((res) => {
                 console.log("response", res.data);
-                // const newPort = res.data.port;
-                // sessionStorage.setItem("port", newPort);
-                // setPort(newPort);
             })
             .catch((err) => {
                 console.log("Error:" + err);
@@ -21,7 +18,7 @@ export default function Test() {
 
     const handleLogin = () => {
         console.log("login");
-        api.post("login/", port, { username: "test", password: "test" })
+        api.post("login/", port, { username: "test2", password: "test" })
             .then((res) => {
                 console.log("response", res.data);
                 const newPort = res.data.port;
