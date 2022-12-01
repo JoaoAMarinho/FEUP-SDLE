@@ -14,6 +14,7 @@ import { str2array, array2str } from "./utils.js";
 import fs from "fs";
 import { createHash } from "crypto";
 import { createPort } from "./router.js";
+import Router from "./routerClass.js";
 
 const bootstrapers = [
     "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
@@ -29,7 +30,7 @@ export class Node {
         this.createNode();
         this.username = username;
 
-        this.port = createPort(this, port);
+        this.port = Router.createPort(this, port);
     }
 
     nodeThings = async () => {
@@ -72,19 +73,19 @@ export class Node {
 
         // start libp2p
         await this.node.start();
-        console.log("libp2p has started");
+        console.log("Node created!");
 
         // print out listening addresses
-        console.log("listening on addresses:");
-        this.node.getMultiaddrs().forEach((addr) => {
-            console.log(addr.toString());
-        });
+        // console.log("Listening on addresses:");
+        // this.node.getMultiaddrs().forEach((addr) => {
+        //     console.log(addr.toString());
+        // });
     };
 
     stopNode = async (node) => {
         // stop libp2p
         await node.stop();
-        console.log("libp2p has stopped");
+        console.log("Node has stopped!");
     };
 
     login = async (username, password) => {
@@ -112,11 +113,10 @@ export class Node {
 
     register = async (username, password) => {
         const usernameArray = str2array(username);
-
         try {
-            await node.contentRouting.get(usernameArray);
-            return { error: "Username already used!" };
-        } catch (_) {
+            await this.node.contentRouting.get(usernameArray);
+            return { error: "User already exists!" };
+        } catch (err) {
             // do nothing
         }
 
@@ -129,6 +129,6 @@ export class Node {
             usernameArray,
             str2array(JSON.stringify(content))
         );
-        return {};
+        return { success: "User created!" };
     };
 }
