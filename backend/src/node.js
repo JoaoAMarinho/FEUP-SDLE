@@ -13,8 +13,7 @@ import {
 import { str2array, array2str } from "./utils.js";
 import fs from "fs";
 import { createHash } from "crypto";
-import { createPort } from "./router.js";
-import Router from "./routerClass.js";
+import Router from "./router.js";
 
 const bootstrapers = [
     "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
