@@ -1,3 +1,5 @@
+import { createHash } from "crypto";
+
 export function array2str(uint8buf) {
     let buf = new ArrayBuffer(uint8buf.length);
     let bufView = new Uint16Array(buf);
@@ -19,4 +21,8 @@ export function str2array(str) {
         bufView.byteOffset,
         bufView.byteLength
     );
+}
+
+export function hash(str) {
+    return createHash("sha256").update(str).digest("hex");
 }

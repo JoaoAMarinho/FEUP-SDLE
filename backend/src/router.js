@@ -9,7 +9,7 @@ export default class Router {
         const { username, password } = req.body;
 
         const response = await node.register(username, password);
-        console.log(response)
+        console.log(response);
 
         if (response.error) return res.status(400).json(response);
 
@@ -19,7 +19,7 @@ export default class Router {
     }
 
     static async loginHandler(node, req, res) {
-        console.log("login")
+        console.log("login");
         const { username, password } = req.body;
         const response = await node.login(username, password);
         console.log(response);
@@ -33,7 +33,12 @@ export default class Router {
 
     static async logoutHandler(req, res) {}
 
-    static async followHandler(req, res) {}
+    static async followHandler(req, res) {
+        console.log("subscribe");
+
+        const { username } = req.body;
+        const response = await node.subscribe(username);
+    }
 
     static async unfollowHandler(req, res) {}
 
@@ -45,6 +50,12 @@ export default class Router {
             message: "Getting feed",
             feed: feed,
         });
+    }
+
+    static async postHandler(node, req, res) {
+        console.log("Post: ", req.body)
+        const { message } = req.body;
+        node.post(message)
     }
 
     static async userHandler(req, res) {}
@@ -66,6 +77,9 @@ export default class Router {
 
         app.get("/feed", (req, res) => {
             this.feedHandler(node, req, res);
+        });
+        app.post("/post", (req, res) => {
+            this.postHandler(node, req, res);
         });
         app.get("/user", this.userHandler.bind(node));
         app.get("/profile", this.profileHandler.bind(node));

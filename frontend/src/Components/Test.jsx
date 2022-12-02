@@ -5,6 +5,8 @@ export default function Test() {
     const [port, setPort] = useState(3001);
     const [feed, setFeed] = useState("");
 
+    const [postText, setPostText] = useState("");
+
     const handleRegister = () => {
         console.log("register");
         api.post("register/", port, { username: "test", password: "test" })
@@ -36,14 +38,28 @@ export default function Test() {
             .then((res) => {
                 console.log("response", res.data);
                 setFeed(res.data.feed);
-                // const newPort = res.data.port;
-                // sessionStorage.setItem("port", newPort);
-                // setPort(newPort);
             })
             .catch((err) => {
                 console.log("Error:" + err);
             });
     };
+
+    const handlePostInputChange = (e) => {
+        const { name, value } = e.target;
+        setPostText(value);
+    }
+
+    const handlePost = (e) => {
+        e.preventDefault()
+        console.log("post", postText);
+        api.post("post/", port, { message: postText } )
+            .then((res) => {
+                console.log("response", res.data)
+            })
+            .catch((err) => {
+                console.log("Error:" + err);
+            });
+    }
 
     useEffect(() => {
         const port = sessionStorage.getItem("port");
@@ -57,6 +73,14 @@ export default function Test() {
             <button onClick={handleRegister}>Register</button>
             <button onClick={handleLogin}>Login</button>
             <button onClick={handleFeed}>Feed</button>
+            <form onSubmit={handlePost}>
+                <input 
+                    type="text" 
+                    name="postText" 
+                    onChange={(e) => handlePostInputChange(e)}
+                    value={postText}></input>
+                <button type="submit">Post</button>
+            </form>
             <div>{"Port: " + port}</div>
             <div>{"Feed: " + feed}</div>
         </>

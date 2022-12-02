@@ -10,6 +10,7 @@
     "@libp2p/mplex": "^7.1.0",
     "@libp2p/peer-id": "^1.1.16",
     "@libp2p/peer-id-factory": "^1.0.19",
+    "@libp2p/pubsub": "^5.0.0",
     "@libp2p/tcp": "^6.0.4",
     "body-parser": "^1.20.1",
     "cors": "^2.8.5",
