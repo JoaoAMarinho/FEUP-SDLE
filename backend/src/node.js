@@ -5,7 +5,9 @@ import { mplex } from "@libp2p/mplex";
 import { kadDHT } from "@libp2p/kad-dht";
 import { pipe } from 'it-pipe'
 import { bootstrap } from "@libp2p/bootstrap";
+import { CID } from 'multiformats/cid'
 import { mdns } from '@libp2p/mdns'
+import delay from 'delay'
 import {
     createRSAPeerId,
     createFromJSON,
@@ -65,19 +67,27 @@ export class Node {
 
         console.log("Node created!", this.node.peerId.toString());
 
+        // Wait for onConnect handlers in the DHT
+        await delay(1000)
+
         if(this.port !== 3001){
           this.node.addEventListener('peer:discovery', this.sharePort);
+          this.node.addEventListener('peer:discovery', this.updateDht);
+          // this.node.addEventListener('peer:discovery', this.updateDht);
         }
 
         //Set route to receive follow requests
         this.node.handle(['/follow'], ( data ) => {
+          console.log(data)
+          // TODO set this to connected peerID (verify)
+          const peerInfo = data.peerId
           pipe(
             data.stream,
             async function (source) {
               for await (const msg of source) {
                 const str = uint8ArrayToString(msg.subarray())
                 console.log(`from: ${data.stream.stat.protocol}, msg: ${str}`)
-                this.sharePosts(str);
+                this.sharePosts(peerInfo);
               }
             }
           ).finally(() => {
@@ -85,20 +95,6 @@ export class Node {
             data.stream.close()
           })
         });
-
-        
-        //TODO put peerID
-        const content = {
-            password: password,
-            peerId: this.node.peerId.toString(),
-        };
-
-        await this.node.contentRouting.put(
-            usernameArray,
-            str2array(JSON.stringify(content)),
-        );
-
-
         
         // print out listening addresses
         // console.log("Listening on addresses:");
@@ -106,6 +102,18 @@ export class Node {
         //     console.log(addr.toString());
         // });
     };
+
+    updateDht = async (evt) => {
+      const key = str2array(this.username)
+      const data = await this.node.contentRouting.get(key);
+      const content = JSON.parse(array2str(data));
+      content.peerId = this.node.peerId.toString()
+      await this.node.contentRouting.put(
+        key,
+        str2array(JSON.stringify(content))
+      );
+      this.node.removeEventListener('peer:discovery', this.updateDht)
+    } 
 
     sharePort = async (evt) => {
       try{
@@ -119,7 +127,6 @@ export class Node {
           )
       }
       catch (err) {
-        console.log("Erro sharing port: ", err)
       }
     }
 
@@ -241,9 +248,11 @@ export class Node {
 
           //TODO get previous posts from user
           const { peerId } = content;
+          const peerInfo = await this.node.peerRouting.findPeer(peerId)
+          console.log(peerInfo)
           
           const posts = receivePosts(username);
-          this.requestPosts(username);
+          this.requestPosts(peerInfo, username);
           
           await posts;
       } catch (err) {
@@ -280,10 +289,10 @@ export class Node {
 
     */
 
-    requestPosts = async (username) => {
+    requestPosts = async (peerInfo, username) => {
       try{
-          const stream = await this.node.dialProtocol( evt.detail.id, [`/follow`]);
-          pipe([uint8ArrayFromString(username.toString())], stream);
+        const stream = await this.node.dialProtocol(peerInfo, [`/follow`]);
+          pipe([uint8ArrayFromString(Date.now().toString())], stream);
       }
       catch (err) {
         console.log(`Error connecting with ${username}. Unable to get posts.`, err)

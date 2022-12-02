@@ -32,6 +32,21 @@ export default function Test() {
             });
     };
 
+    const handleLogout = () => {
+        console.log("logout");
+        sessionStorage.setItem("port", 3001);
+        setPort(3001);
+        // api.post("logout/", port)
+        //     .then((res) => {
+        //         console.log("logged out " + port)
+        //         sessionStorage.setItem("port", 3001);
+        //         setPort(3001);
+        //     })
+        //     .catch((err) => {
+        //         console.log("Erro logout:" + err)
+        //     })
+    }
+
     const handleFeed = () => {
         console.log("feed");
         api.get("feed/", port)
@@ -72,6 +87,7 @@ export default function Test() {
         <>
             <button onClick={handleRegister}>Register</button>
             <button onClick={handleLogin}>Login</button>
+            <button onClick={handleLogout}>Logout</button>
             <button onClick={handleFeed}>Feed</button>
             <form onSubmit={handlePost}>
                 <input 

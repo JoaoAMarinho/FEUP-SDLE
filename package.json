@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@libp2p/mdns": "^5.1.0"
+    "@libp2p/mdns": "^5.1.0",
+    "delay": "^5.0.0"
   }
 }
