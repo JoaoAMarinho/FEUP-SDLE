@@ -1,3 +1,8 @@
+# Global API
+
+https://github.com/libp2p/js-libp2p/blob/master/doc/API.md
+
+
 # DHT - distributed hash table
 
 ### Users list (permanent)
