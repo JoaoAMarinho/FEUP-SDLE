@@ -8,6 +8,7 @@ import { bootstrap } from "@libp2p/bootstrap";
 import { CID } from 'multiformats/cid'
 import { mdns } from '@libp2p/mdns'
 import delay from 'delay'
+import { gossipsub } from '@chainsafe/libp2p-gossipsub'
 import {
     createRSAPeerId,
     createFromJSON,
@@ -60,6 +61,7 @@ export class Node {
                     interval: 20e3
                 })
             ],
+          pubsub: gossipsub({ allowPublishToZeroPeers: true })
         });
 
         // start libp2p
@@ -180,7 +182,6 @@ export class Node {
         return { port: port };
     };
 
-
     register = async (username, password) => {
         if(!this.node.isStarted()){
           return {error: "Node starting"};
@@ -193,15 +194,29 @@ export class Node {
             // do nothing
         }
 
+        // Register user + pass in DHT of user entry
         password = hash(password);
         const content = {
             password: password,
         };
-
         await this.node.contentRouting.put(
             usernameArray,
             str2array(JSON.stringify(content))
         );
+        
+        //Register user in DHT of users list
+        const key = str2array("users")
+        let data = []
+        try {
+          data = await this.node.contentRouting.get(key)
+          data = JSON.parse(array2str(data));
+        } catch (err) {}
+        data.push(username)
+        await this.node.contentRouting.put(
+          key,
+          str2array(JSON.stringify(data))
+        );
+
         return { success: "User created!" };
     };
 
@@ -280,15 +295,6 @@ export class Node {
       });
     }
 
-
-    /*
-    
-    node1 -> sub(node2), setReceivePost(node2), reqPost(node2) -> receivePost(node2)
-
-    node2, setReqPost(node2) -> receiveReqPost(node1) -> sendPost(node2)
-
-    */
-
     requestPosts = async (peerInfo, username) => {
       try{
         const stream = await this.node.dialProtocol(peerInfo, [`/follow`]);
@@ -307,5 +313,13 @@ export class Node {
       catch (err) {
         console.log("Erro sharing posts: ", err)
       }
+    }
+
+    listUsers = async () => {
+      const key = str2array("users")
+      let data = await this.node.contentRouting.get(key)
+      data = JSON.parse(array2str(data));
+      console.log(data)
+      return {users: data}
     }
 }

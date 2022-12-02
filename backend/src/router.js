@@ -58,7 +58,10 @@ export default class Router {
         node.post(message)
     }
 
-    static async userHandler(req, res) {}
+    static async usersHandler(node, req, res) {
+        const users = await node.listUsers()
+        res.status(200).json(users);
+    }
 
     static async profileHandler(req, res) {}
 
@@ -81,7 +84,9 @@ export default class Router {
         app.post("/post", (req, res) => {
             this.postHandler(node, req, res);
         });
-        app.get("/user", this.userHandler.bind(node));
+        app.get("/users", (req, res) => {
+            this.usersHandler(node, req, res);
+        })
         app.get("/profile", this.profileHandler.bind(node));
     }
 

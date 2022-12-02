@@ -4,6 +4,7 @@ import api from "../Utils/api";
 export default function Test() {
     const [port, setPort] = useState(3001);
     const [feed, setFeed] = useState("");
+    const [users, setUsers] = useState([])
 
     const [postText, setPostText] = useState("");
 
@@ -59,6 +60,17 @@ export default function Test() {
             });
     };
 
+    const handleListUsers = () => {
+        console.log("list users");
+        api.get("users/", port)
+            .then((res) => {
+                console.log("response", res.data);
+                setUsers(res.data.users);
+            })
+            .catch((err) => {
+                console.log("Error:" + err);
+            });
+    };
     const handlePostInputChange = (e) => {
         const { name, value } = e.target;
         setPostText(value);
@@ -89,6 +101,7 @@ export default function Test() {
             <button onClick={handleLogin}>Login</button>
             <button onClick={handleLogout}>Logout</button>
             <button onClick={handleFeed}>Feed</button>
+            <button onClick={handleListUsers}>Users</button>
             <form onSubmit={handlePost}>
                 <input 
                     type="text" 
@@ -99,6 +112,7 @@ export default function Test() {
             </form>
             <div>{"Port: " + port}</div>
             <div>{"Feed: " + feed}</div>
+            <div>{"Users: "+ users}</div>
         </>
     );
 }

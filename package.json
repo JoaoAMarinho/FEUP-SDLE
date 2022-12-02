@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@chainsafe/libp2p-gossipsub": "^5.2.1",
     "@libp2p/mdns": "^5.1.0",
     "delay": "^5.0.0"
   }
