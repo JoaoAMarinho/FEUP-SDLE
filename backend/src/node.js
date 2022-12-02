@@ -268,7 +268,7 @@ export class Node {
           
           const posts = receivePosts(username);
           this.requestPosts(peerInfo, username);
-          
+
           await posts;
       } catch (err) {
           return { error: "User does not exist!" };

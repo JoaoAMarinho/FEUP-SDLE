@@ -33,7 +33,7 @@ topic: "feed/"hash(username)
 
 # Dial protocol - exchange messages
 
-https://github.com/libp2p/js-libp2p/tree/master/examples/protocol-and-stream-muxing#2-reuse-existing-connection
+https://github.com/libp2p/js-libp2p/tree/master/examples/protocol-and-stream-muxing#3-bidirectional-connections
 
 Create "routes" that allow nodes to exchange desired messages
 
