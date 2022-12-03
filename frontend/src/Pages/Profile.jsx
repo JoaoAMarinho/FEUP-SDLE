@@ -3,35 +3,12 @@ import NavBar from "../Components/Navbar";
 import api from "../Utils/api";
 
 export default function Users() {
-  const [port, setPort] = useState(3001);
+  const [port, setPort] = useState(sessionStorage.getItem("port"));
   const [user, setUser] = useState({
     username: "",
     following: [],
     followers: [],
     timeline: [],
-    posts: [
-      {
-        username: "margaridajcv",
-        message: "Oi pipa",
-        date: Date.now(),
-      },
-      {
-        username: "margaridajcv",
-        message: "Portugal ganhou",
-        date: new Date(2022, 11, 1, 3, 24, 0),
-      },
-      {
-        username: "margaridajcv",
-        message: "Beleza",
-        date: new Date(2022, 11, 2, 3, 24, 0),
-      },
-      {
-        username: "margaridajcv",
-        message:
-          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec qu",
-        date: Date.now(),
-      },
-    ],
   });
 
   const getTimeDiference = (currDate, date) => {
@@ -71,16 +48,13 @@ export default function Users() {
         setUser(res.data.user);
       })
       .catch((err) => {
-        console.log("Error fetching feed:" + err);
+        console.log("Error fetching feed:", err);
       });
   };
 
   useEffect(() => {
-    const port = sessionStorage.getItem("port");
-    if (port) setPort(port);
-
     fetchProfile();
-  }, [user]);
+  }, []);
 
   return (
     <>
@@ -119,7 +93,7 @@ export default function Users() {
             style={{ height: "3px", backgroundColor: "white" }}
             className="border border-0"
           />
-          {user.posts.map((post) => {
+          {user.timeline && user.timeline.map((post) => {
             const date = Date.now();
             return (
               <div
