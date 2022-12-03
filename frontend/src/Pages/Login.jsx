@@ -34,12 +34,11 @@ export default function Login() {
 
         const newPort = res.data.port;
         sessionStorage.setItem("port", newPort);
-        setPort(newPort);
 
         navigate("/feed");
       })
       .catch((err) => {
-        console.log("Login error:" + err);
+        console.log("Login error:", err);
       });
   };
 

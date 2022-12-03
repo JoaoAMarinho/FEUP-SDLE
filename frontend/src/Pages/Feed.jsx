@@ -5,19 +5,19 @@ import { IoMdSend } from "react-icons/io";
 import { AiFillDelete } from "react-icons/ai";
 
 export default function Feed() {
-  const [port, setPort] = useState(3001);
-  const [feed, setFeed] = useState("");
+  const [port, setPort] = useState(sessionStorage.getItem("port"));
+  const [feed, setFeed] = useState([]);
   const [post, setPost] = useState("");
 
   const fetchFeed = () => {
     api
       .get("feed/", port)
       .then((res) => {
-        console.log("Response:", res.data);
-        setFeed(res.data.feed);
+        console.log("Response:", res.data.feed);
+        setFeed(res.data.feed ? res.data.feed : []);
       })
       .catch((err) => {
-        console.log("Error fetching feed:" + err);
+        console.log("Error fetching feed:", err);
       });
   };
 
@@ -65,7 +65,7 @@ export default function Feed() {
         console.log("Post response", res.data);
       })
       .catch((err) => {
-        console.log("Post error:" + err);
+        console.log("Post error:", err);
       });
   };
 
@@ -74,7 +74,7 @@ export default function Feed() {
     if (port) setPort(port);
 
     fetchFeed();
-  }, []);
+  }, [port]);
 
   return (
     <>

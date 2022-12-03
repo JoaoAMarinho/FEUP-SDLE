@@ -35,7 +35,7 @@ export default function Register() {
                 navigate("/login");
             })
             .catch((err) => {
-                console.log("Register error:" + err);
+                console.log("Register error:", err);
             });
     };
 

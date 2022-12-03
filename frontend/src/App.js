@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
@@ -11,7 +11,7 @@ import Test from "./Components/Test";
 
 function App() {
   return (
-    <div className="App d-flex flex-column">
+    <div className="App d-flex flex-column position-relative">
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Test />} />
@@ -20,7 +20,7 @@ function App() {
           <Route path="/feed" element={<Feed />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/users" element={<Users />} />
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<Navigate to="/profile" />} />
         </Routes>
       </BrowserRouter>
     </div>

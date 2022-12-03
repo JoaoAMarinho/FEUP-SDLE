@@ -16,7 +16,7 @@ export default function Test() {
         console.log("response", res.data);
       })
       .catch((err) => {
-        console.log("Error:" + err);
+        console.log("Error:", err);
       });
   };
 
@@ -31,7 +31,7 @@ export default function Test() {
         setPort(newPort);
       })
       .catch((err) => {
-        console.log("Error:" + err);
+        console.log("Error:", err);
       });
   };
 
@@ -47,7 +47,7 @@ export default function Test() {
         setPort(3001);
       })
       .catch((err) => {
-        console.log("Erro logout:" + err);
+        console.log("Erro logout:", err);
       });
   };
 
@@ -61,7 +61,7 @@ export default function Test() {
         setFeed(res.data.feed[0].message);
       })
       .catch((err) => {
-        console.log("Error:" + err);
+        console.log("Error:", err);
       });
   };
 
@@ -74,7 +74,7 @@ export default function Test() {
         setUsers(res.data.users);
       })
       .catch((err) => {
-        console.log("Error:" + err);
+        console.log("Error:", err);
       });
   };
 
@@ -92,7 +92,7 @@ export default function Test() {
         console.log("response", res.data);
       })
       .catch((err) => {
-        console.log("Error:" + err);
+        console.log("Error:", err);
       });
   };
 
@@ -105,7 +105,7 @@ export default function Test() {
         console.log("response", res.data);
       })
       .catch((err) => {
-        console.log("Error:" + err);
+        console.log("Error:", err);
       });
   };
 
