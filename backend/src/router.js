@@ -55,6 +55,7 @@ export default class Router {
     }
 
     static async feedHandler(node, req, res) {
+        // TODO append all timelines from following users and sort by timestamp
         let feed = [];
         if (node.port !== 3001)
             feed = node.feed;
