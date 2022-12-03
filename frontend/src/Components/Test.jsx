@@ -35,17 +35,17 @@ export default function Test() {
 
     const handleLogout = () => {
         console.log("logout");
-        sessionStorage.setItem("port", 3001);
-        setPort(3001);
-        // api.post("logout/", port)
-        //     .then((res) => {
-        //         console.log("logged out " + port)
-        //         sessionStorage.setItem("port", 3001);
-        //         setPort(3001);
-        //     })
-        //     .catch((err) => {
-        //         console.log("Erro logout:" + err)
-        //     })
+        // sessionStorage.setItem("port", 3001);
+        // setPort(3001);
+        api.post("logout/", port)
+            .then((res) => {
+                console.log("logged out " + port)
+                sessionStorage.setItem("port", 3001);
+                setPort(3001);
+            })
+            .catch((err) => {
+                console.log("Erro logout:" + err)
+            })
     }
 
     const handleFeed = () => {

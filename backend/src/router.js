@@ -30,7 +30,13 @@ export default class Router {
         });
     }
 
-    static async logoutHandler(req, res) {}
+    static async logoutHandler(node, req, res) {
+        console.log("logout");
+        const response = await node.logout();
+        console.log(response);
+        if(response.error) return res.status(400).json(response);
+        res.status(200).json(response)
+    }
 
     static async followHandler(node, req, res) {
         console.log("follow");
@@ -73,7 +79,9 @@ export default class Router {
         app.post("/login", (req, res) => {
             this.loginHandler(node, req, res);
         });
-        app.post("/logout", this.logoutHandler.bind(node));
+        app.post("/logout", (req,res) => {
+            this.logoutHandler(node, req, res)
+        });
 
         app.post("/follow", (req, res) => {
             this.followHandler(node, req, res);

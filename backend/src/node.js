@@ -172,6 +172,23 @@ export class Node {
         return { port: port };
     };
 
+    logout = async () => {
+        if (!this.node.isStarted()) {
+          return { error: "Node starting" };
+        }
+
+        const key = str2array(this.username);
+        data = await this.node.contentRouting.get(key);
+        data = JSON.parse(array2str(data));
+        delete data["peerId"];
+        await this.node.contentRouting.put(
+          key,
+          str2array(JSON.stringify(data))
+        );
+
+        return {success: "User logout!"}
+    }
+
     register = async (username, password) => {
         if (!this.node.isStarted()) {
             return { error: "Node starting" };
