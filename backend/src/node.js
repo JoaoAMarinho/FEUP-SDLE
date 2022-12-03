@@ -186,6 +186,8 @@ export class Node {
           str2array(JSON.stringify(data))
         );
 
+        await this.stopNode();
+
         return {success: "User logout!"}
     }
 
