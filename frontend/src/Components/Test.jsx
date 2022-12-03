@@ -73,7 +73,7 @@ export default function Test() {
             });
     };
     const handlePostInputChange = (e) => {
-        const { name, value } = e.target;
+        const { value } = e.target;
         setPostText(value);
     }
 

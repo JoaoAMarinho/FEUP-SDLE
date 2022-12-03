@@ -1,8 +1,5 @@
 import axios from "axios";
 
-// const BACKEND_SERVER = `${process.env.REACT_APP_BACKEND_HOST}:${process.env.REACT_APP_BACKEND_PORT}/api/`;
-// const BACKEND_SERVER = `localhost:3001/`;
-
 // Get request with authentication
 export async function get(route, port, payload = {}) {
     const config = {
