@@ -10,7 +10,7 @@ export default function Test() {
 
     const handleRegister = () => {
         console.log("register");
-        api.post("register/", port, { username: "test", password: "test" })
+        api.post("register/", port, { username: "test2", password: "test2" })
             .then((res) => {
                 console.log("response", res.data);
             })
@@ -21,7 +21,7 @@ export default function Test() {
 
     const handleLogin = () => {
         console.log("login");
-        api.post("login/", port, { username: "test", password: "test" })
+        api.post("login/", port, { username: "test2", password: "test2" })
             .then((res) => {
                 console.log("response", res.data);
                 const newPort = res.data.port;
@@ -53,7 +53,8 @@ export default function Test() {
         api.get("feed/", port)
             .then((res) => {
                 console.log("response", res.data);
-                setFeed(res.data.feed);
+                // TODO: show all feed
+                setFeed(res.data.feed[0].message);
             })
             .catch((err) => {
                 console.log("Error:" + err);
@@ -88,6 +89,18 @@ export default function Test() {
             });
     }
 
+    const handleFollow = (e) => {
+        e.preventDefault()
+        console.log("follow test2");
+        api.post("follow/", port, { username: "test2" } )
+            .then((res) => {
+                console.log("response", res.data)
+            })
+            .catch((err) => {
+                console.log("Error:" + err);
+            });
+    }
+
     useEffect(() => {
         const port = sessionStorage.getItem("port");
         if (port) {
@@ -102,6 +115,7 @@ export default function Test() {
             <button onClick={handleLogout}>Logout</button>
             <button onClick={handleFeed}>Feed</button>
             <button onClick={handleListUsers}>Users</button>
+            <button onClick={handleFollow}>Follow</button>
             <form onSubmit={handlePost}>
                 <input 
                     type="text" 

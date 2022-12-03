@@ -5,7 +5,6 @@ import bodyParser from "body-parser";
 export default class Router {
     // REQUEST HANDLERS
     static async registerHandler(node, req, res) {
-        console.log("register")
         const { username, password } = req.body;
 
         const response = await node.register(username, password);
@@ -33,11 +32,12 @@ export default class Router {
 
     static async logoutHandler(req, res) {}
 
-    static async followHandler(req, res) {
-        console.log("subscribe");
+    static async followHandler(node, req, res) {
+        console.log("follow");
 
         const { username } = req.body;
-        const response = await node.subscribe(username);
+        const response = await node.follow(username);
+        return res.status(200).json(response);
     }
 
     static async unfollowHandler(req, res) {}
@@ -45,7 +45,7 @@ export default class Router {
     static async feedHandler(node, req, res) {
         let feed = "WRONG";
         if (node.port !== 3001)
-            feed = "piu piu piu piu piu piu piu piu piu piu piu piu piu a lot";
+            feed = node.feed;
         res.status(200).json({
             message: "Getting feed",
             feed: feed,
@@ -75,7 +75,10 @@ export default class Router {
         });
         app.post("/logout", this.logoutHandler.bind(node));
 
-        app.post("/follow", this.followHandler.bind(node));
+        app.post("/follow", (req, res) => {
+            this.followHandler(node, req, res);
+        });
+
         app.post("/unfollow", this.unfollowHandler.bind(node));
 
         app.get("/feed", (req, res) => {
