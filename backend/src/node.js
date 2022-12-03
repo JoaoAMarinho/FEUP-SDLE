@@ -9,6 +9,9 @@ import { mdns } from "@libp2p/mdns";
 import { peerIdFromString } from "@libp2p/peer-id";
 import delay from "delay";
 import { gossipsub } from "@chainsafe/libp2p-gossipsub";
+import * as json from 'multiformats/codecs/json'
+import { sha256 } from 'multiformats/hashes/sha2'
+import all from 'it-all'
 import {
     createRSAPeerId,
     createFromJSON,
@@ -22,14 +25,14 @@ import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 
 export class Node {
-    constructor(port, username = "default") {
-        this.port = Router.createPort(this, port);
-        this.createNode();
-        this.username = username;
-        this.timeline = [];
-        this.feed = {};
-        this.followers = [];
-        this.following = [];
+    async init(port, username = "default"){
+      this.port = await Router.createPort(this, port);
+      this.username = username;
+      await this.createNode();
+      this.timeline = [];
+      this.feed = {};
+      this.followers = [];
+      this.following = [];
     }
 
     getUserHash() {
@@ -68,6 +71,7 @@ export class Node {
             // this.node.addEventListener('peer:discovery', this.updateDht);
         }
 
+
         //Set route to receive follow requests
         this.node.handle(["/follow"], (data) => {
             const peerId = data.connection.remotePeer;
@@ -103,14 +107,9 @@ export class Node {
             });
         });
 
-        // print out listening addresses
-        // console.log("Listening on addresses:");
-        // this.node.getMultiaddrs().forEach((addr) => {
-        //     console.log(addr.toString());
-        // });
     };
 
-    updateDht = async (evt) => {
+    updateDht = async () => {
         const key = str2array(this.username);
 
         let data = {};
@@ -118,10 +117,13 @@ export class Node {
             data = await this.node.contentRouting.get(key);
             data = JSON.parse(array2str(data));
         } catch (_) {
+          console.log(_)
+          return
             // do nothing
         }
 
         data.peerId = this.node.peerId.toString();
+        console.log("update", data)
         await this.node.contentRouting.put(
             key,
             str2array(JSON.stringify(data))
@@ -132,7 +134,7 @@ export class Node {
     sharePort = async (evt) => {
         try {
             const stream = await this.node.dialProtocol(evt.detail.id, [
-                `/port/${this.username}`,
+                `/port/${hash(this.username)}`,
             ]);
             pipe([uint8ArrayFromString(this.port.toString())], stream).finally(
                 this.node.removeEventListener("peer:discovery", this.sharePort)
@@ -158,32 +160,16 @@ export class Node {
             );
             const content = JSON.parse(array2str(data));
             if (content.password !== password) {
-                return { error: "Invalid password!" };
+              return { error: "Invalid password!" };
             }
-        } catch (err) {
+          } catch (err) {
             console.log(err.code);
             return { error: "Username does not exist!" };
-        }
+          }
 
-        let portPromise = new Promise((resolve) => {
-            this.node.handle([`/port/${username}`], ({ stream }) => {
-                pipe(stream, async function (source) {
-                    for await (const msg of source) {
-                        const str = uint8ArrayToString(msg.subarray());
-                        console.log(
-                            `from: ${stream.stat.protocol}, msg: ${str}`
-                        );
-                        resolve(parseInt(str));
-                    }
-                }).finally(() => {
-                    // clean up resources
-                    stream.close();
-                    this.node.unhandle([`/port/${username}`]);
-                });
-            });
-        });
+        let portPromise = this.handleReceivePort(username)
+        new Node().init(0, username);
 
-        new Node(0, username);
         const port = await portPromise;
 
         return { port: port };
@@ -221,6 +207,7 @@ export class Node {
             // do nothing
         }
 
+
         // Register user + pass in DHT of user entry
         password = hash(password);
         const content = {
@@ -239,12 +226,24 @@ export class Node {
             data = JSON.parse(array2str(data));
         } catch (_) {
             // do nothing
-        }
-
+        } 
         data.push(username);
         await this.node.contentRouting.put(
             key,
             str2array(JSON.stringify(data))
+        );
+
+        const dir = "users"
+        const usersFile = `./users/accounts.txt`
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir);
+        }
+        let users = []
+        if (fs.existsSync(usersFile)) users = JSON.parse(fs.readFileSync(usersFile))
+        users.push({user: username, password: password})
+        fs.writeFileSync(
+          usersFile,
+          JSON.stringify(users)
         );
 
         return { success: "User created!" };
@@ -293,6 +292,7 @@ export class Node {
         try {
             const data = await this.node.contentRouting.get(usernameArray);
             const content = JSON.parse(array2str(data));
+            console.log(content)
 
             this.feed[username] = [];
             const topic = `feed/${hash(username)}`;
@@ -307,10 +307,11 @@ export class Node {
             const { peerId } = content;
 
             const bytes = json.encode(`/posts/${hash(username)}`);
-            const hash = await sha256.digest(bytes);
-            const cid = CID.create(1, json.code, hash);
+            const cid_hash = await sha256.digest(bytes);
+            const cid = CID.create(1, json.code, cid_hash);
 
-            let posts = this.handleReceivePosts(username);
+            let postsPromise = this.handleReceivePosts(username);
+            let posts = []
 
             if (peerId) {
                 const peerID = peerIdFromString(peerId);
@@ -318,28 +319,34 @@ export class Node {
 
                 console.log("Send Follow Request");
                 this.sendFollow(peerInfo.id, username);
-                await posts;
+                posts = await postsPromise;
             } else {
                 console.log("User not online");
 
                 // Ask for user posts to providers
                 const providers = await all(this.node.contentRouting.findProviders(cid, { timeout: 3000 }));
+                let requested = false
                 if (providers.length > 0) {
-                    const peerInfo = providers[0];
-                    console.log("Send Request Posts");
-                    // this.sendFollow(peerInfo.id, username);
-                    await posts;
-                } else {
+                    providers.forEach(peer => {
+                      console.log("Send Request Posts");
+                      requested |= this.sendRequestPosts(peer.id, username)
+                    });
+                    if(requested){
+                        posts = await postsPromise;
+                    }
+                } 
+                if(!requested) {
                     console.log("No followers online")
                     posts = [];
                 }
             }
 
-            this.feed[username].push(...posts);
-
+            posts.forEach(elem => {
+                this.feed[username].push(elem)
+            })
             this.providePosts(cid);
+            this.handleProvideFollowingPosts(username)
 
-            this.feed[username] = posts;
 
             return { posts: posts };
         } catch (err) {
@@ -370,8 +377,11 @@ export class Node {
             if (index == -1) return { error: `Not subscribed to ${username}` };
             this.following.splice(index, 1);
 
-            const { peerId } = content;
+            // remove user posts from feed
+            delete this.feed[username]
+            this.node.unhandle([`/request_posts/${hash(username)}`]);
 
+            const { peerId } = content;
             if (peerId) {
                 const peerID = peerIdFromString(peerId);
                 const peerInfo = await this.node.peerRouting.findPeer(peerID);
@@ -390,14 +400,38 @@ export class Node {
         }
     };
 
+    handleReceivePort = async (username) => {
+      return new Promise((resolve) => {
+          this.node.handle([`/port/${hash(username)}`], ({ stream }) => {
+            pipe(stream, async function (source) {
+              for await (const msg of source) {
+                const str = uint8ArrayToString(msg.subarray());
+                console.log(
+                  `from: ${stream.stat.protocol}, msg: ${str}`
+                );
+                resolve(parseInt(str));
+              }
+            }).finally(() => {
+              // clean up resources
+              stream.close();
+              this.node.unhandle([`/port/${hash(username) }`]);
+            })
+          })
+          // TODO handle error of handler already defined
+          // .catch((err) => {
+          //   console.log("Handel error of handler already defined")
+          // })
+        });
+    }
+
     handleReceivePosts = async (username) => {
         return new Promise((resolve) => {
             this.node.handle([`/posts/${hash(username)}`], (data) => {
                 pipe(data.stream, async function (source) {
                     for await (const msg of source) {
-                        const str = uint8ArrayToString(msg.subarray());
+                        const str = JSON.parse(uint8ArrayToString(msg.subarray()));
                         console.log(
-                            `from: ${data.stream.stat.protocol}, msg: ${str}`
+                            `from: ${data.stream.stat.protocol}, msg: ${JSON.stringify(str)}`
                         );
                         resolve(str);
                     }
@@ -424,6 +458,39 @@ export class Node {
             );
         }
     };
+
+    sendRequestPosts = async (peerId, username) => {
+      try {
+        const stream = await this.node.dialProtocol(peerId, [`/request_posts/${hash(username)}`]);
+        const content = {
+          data: Date.now().toString(),
+        };
+        pipe([uint8ArrayFromString(JSON.stringify(content))], stream);
+      } catch (err) {
+        console.log(
+          `Unable to get posts ${username}.`,
+          err
+        );
+        return false
+      }
+      return true
+    };
+
+    handleProvideFollowingPosts = async (username) => {
+      this.node.handle([`/request_posts/${hash(username)}`], (data) => {
+        pipe(data.stream, async(source) =>  {
+          for await (const msg of source) {
+            const content = JSON.parse(uint8ArrayToString(msg.subarray()));
+            console.log(
+              `from: ${data.stream.stat.protocol}, msg: ${content}`
+            );
+            await this.shareFollowingPosts(data.connection.remotePeer, username)
+          }
+        }).finally(() => {
+          data.stream.close();
+        });
+      });
+    }
 
     sendUnfollow = async (peerId, username) => {
         try {
@@ -483,4 +550,36 @@ export class Node {
 
         return response;
     };
+
+    loadAccounts = async () => {
+      const dir = "users"
+      const usersFile = `./users/accounts.txt`
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir);
+      }
+      if(!fs.existsSync(usersFile)) return
+      const users = JSON.parse(fs.readFileSync(usersFile))
+      const usersList = []
+
+      for (const user of users) {
+        const usernameArray = str2array(user.user);
+        // Register user + pass in DHT of user entry
+        const password = user.password;
+        const content = {
+          password: password,
+        };
+        await this.node.contentRouting.put(
+          usernameArray,
+          str2array(JSON.stringify(content))
+        );
+        usersList.push(user.user)
+      }
+
+      //Register user in DHT of users list
+      const key = str2array("users");
+      await this.node.contentRouting.put(
+        key,
+        str2array(JSON.stringify(usersList))
+      );
+    }
 }

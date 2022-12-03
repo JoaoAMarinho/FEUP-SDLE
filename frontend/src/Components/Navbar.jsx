@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation, Link, NavLink } from "react-router-dom";
+import { useLocation, Link, NavLink, useNavigate } from "react-router-dom";
 import {
     HiOutlineHome,
     HiOutlineUser,
@@ -11,6 +11,7 @@ import api from "../Utils/api";
 
 // TODO: fix navbar responsiveness
 export default function NavBar() {
+    const navigate = useNavigate();
     const location = useLocation();
 
     const logout = () => {
@@ -19,10 +20,12 @@ export default function NavBar() {
         .post("logout/", sessionStorage.getItem("port"))
         .then((_) => {
           sessionStorage.removeItem("port");
+          navigate("/login");
         })
         .catch((err) => {
           console.log("Erro logout:", err);
           sessionStorage.removeItem("port");
+          navigate("/login");
         });
     };
 
@@ -72,7 +75,7 @@ export default function NavBar() {
                 </li>
               )}
               <li className="nav-item">
-                <NavLink className="nav-link" onClick={logout} to="/login">
+                <NavLink className="nav-link" onClick={logout}>
                   <HiOutlineLogout size={30} color="#15202B" />
                 </NavLink>
               </li>
