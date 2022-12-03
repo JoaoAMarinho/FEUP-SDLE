@@ -99,7 +99,7 @@ export default function Register() {
                     Welcome to PiuPiu
                 </p>
             </div>
-            <div className="row col-sm-8 col-md-5 col-12 px-4">
+            <div className="row col-md-8 col-lg-6 col-xl-5 col-10 px-4">
                 <div className="col-12 mb-2">
                     <h3 className="w-100">Register</h3>
                 </div>
@@ -112,7 +112,7 @@ export default function Register() {
                             id="username"
                             name="username"
                             className={
-                                "form-control rounded-pill bg-secondary border border-0" +
+                                "form-control rounded-pill bg-secondary border border-0 text-white" +
                                 (validation.username ? " is-invalid" : "")
                             }
                             onChange={(e) => handleChange(e)}
@@ -133,7 +133,7 @@ export default function Register() {
                             type="password"
                             name="password"
                             className={
-                                "form-control rounded-pill bg-secondary border border-0" +
+                                "form-control rounded-pill bg-secondary border border-0 text-white" +
                                 (validation.password ? " is-invalid" : "")
                             }
                             onChange={(e) => handleChange(e)}
@@ -154,7 +154,7 @@ export default function Register() {
                             type="password"
                             name="confirmPassword"
                             className={
-                                "form-control rounded-pill bg-secondary border border-0" +
+                                "form-control rounded-pill bg-secondary border border-0 text-white" +
                                 (validation.confirmPassword ? " is-invalid" : "")
                             }
                             onChange={(e) => handleChange(e)}
@@ -166,14 +166,22 @@ export default function Register() {
                             </div>
                         )}
                     </div>
-                    <div className="form-group mt-5 d-flex justify-content-between">
+                    <div className="form-group mt-5 d-flex justify-content-between align-items-center">
                         <span>
-                            Already have an account? <a href="/login">Login</a>
+                            Already have an account?{" "}
+                            <a href="/login" style={{ color: "#1D9BF0" }}>
+                                Login
+                            </a>
                         </span>
                         <button
                             type="submit"
-                            className="btn btn-primary rounded-pill"
-                        >
+                            className="btn btn-primary rounded-pill px-sm-5 px-3 py-2 ms-2 ms-sm-0"
+                            style={{
+                                backgroundColor: "#1D9BF0",
+                                fontWeight: 500,
+                                fontSize: "1.1rem",
+                              }}
+                            >
                             Register
                         </button>
                     </div>
