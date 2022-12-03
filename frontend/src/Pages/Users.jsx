@@ -1,10 +1,10 @@
 import React from "react";
 import NavBar from "../Components/Navbar";
 
-export default function Users({ logout }) {
+export default function Users() {
     return (
         <>
-            <NavBar logout={logout} />
+            <NavBar />
         </>
     );
 }
