@@ -5,34 +5,34 @@ import api from "../Utils/api";
 export default function Users() {
   const [port, setPort] = useState(3001);
   const [user, setUser] = useState({
-    username: "margaridajcv",
-    following: 0,
-    followers: 0,
+    username: "",
+    following: [],
+    followers: [],
     timeline: [],
     posts: [
-        {
-          username: "margaridajcv",
-          message: "Oi pipa",
-          date: Date.now(),
-        },
-        {
-          username: "margaridajcv",
-          message: "Portugal ganhou",
-          date: new Date(2022, 11, 1, 3, 24, 0),
-        },
-        {
-          username: "margaridajcv",
-          message: "Beleza",
-          date: new Date(2022, 11, 2, 3, 24, 0),
-        },
-        {
-          username: "margaridajcv",
-          message:
-            "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec qu",
-          date: Date.now(),
-        }],
+      {
+        username: "margaridajcv",
+        message: "Oi pipa",
+        date: Date.now(),
+      },
+      {
+        username: "margaridajcv",
+        message: "Portugal ganhou",
+        date: new Date(2022, 11, 1, 3, 24, 0),
+      },
+      {
+        username: "margaridajcv",
+        message: "Beleza",
+        date: new Date(2022, 11, 2, 3, 24, 0),
+      },
+      {
+        username: "margaridajcv",
+        message:
+          "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec qu",
+        date: Date.now(),
+      },
+    ],
   });
-
 
   const getTimeDiference = (currDate, date) => {
     const secondDiff = (currDate - date) / 1000;
@@ -68,7 +68,7 @@ export default function Users() {
       .get("profile/", port)
       .then((res) => {
         console.log("Response:", res.data);
-        setUser(res.data);
+        setUser(res.data.user);
       })
       .catch((err) => {
         console.log("Error fetching feed:" + err);
@@ -104,10 +104,10 @@ export default function Users() {
                 </small>
                 <div>
                   <small className="card-subtitle text-muted me-2">
-                    <b>{user.followers}</b> followers
+                    <b>{user.followers.length}</b> followers
                   </small>
                   <small className="card-subtitle text-muted">
-                    <b>{user.following}</b> following
+                    <b>{user.following.length}</b> following
                   </small>
                 </div>
               </div>
@@ -115,7 +115,10 @@ export default function Users() {
           </div>
         </div>
         <div className="row col-sm-7 col-lg-5 col-10 justify-content-center my-5">
-            <hr style={{height: "3px", backgroundColor: "white"}} className="border border-0" />
+          <hr
+            style={{ height: "3px", backgroundColor: "white" }}
+            className="border border-0"
+          />
           {user.posts.map((post) => {
             const date = Date.now();
             return (
