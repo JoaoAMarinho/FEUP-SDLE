@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 import api from "../Utils/api";
 import Logo from "../logo.svg";
 
@@ -13,7 +12,7 @@ export default function Login() {
     username: "",
     password: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
+
   const [validation, setValidation] = useState({
     username: "",
     password: "",
@@ -123,7 +122,7 @@ export default function Login() {
               type="password"
               name="password"
               className={
-                "form-control rounded-pill bg-secondary border border-0" +
+                "form-control rounded-pill bg-secondary border border-0 text-white" +
                 (validation.password ? " is-invalid" : "")
               }
               onChange={(e) => handleChange(e)}
