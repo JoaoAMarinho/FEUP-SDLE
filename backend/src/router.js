@@ -46,10 +46,16 @@ export default class Router {
         return res.status(200).json(response);
     }
 
-    static async unfollowHandler(req, res) {}
+    static async unfollowHandler(node, req, res) {
+        console.log("unfollow");
+
+        const { username } = req.body;
+        const response = await node.unfollow(username);
+        return res.status(200).json(response);
+    }
 
     static async feedHandler(node, req, res) {
-        let feed = "WRONG";
+        let feed = [];
         if (node.port !== 3001)
             feed = node.feed;
         res.status(200).json({
@@ -65,24 +71,24 @@ export default class Router {
     }
 
     static async usersHandler(node, req, res) {
-        const users = await node.listUsers()
-        res.status(200).json(users);
+        const users = await node.listUsers();
+        return res.status(200).json(users);
     }
 
-    static async profileHandler(req, res) {
-        if (node.port !== 3001)
-            user = {
+    static async profileHandler(node, req, res) {
+        if (node.port !== 3001) {
+            console.log('profile');
+            const user = {
                 username: node.username,
                 followers: node.followers,
                 following: node.following,
                 timeline: node.timeline,
-                posts: node.posts,
-            }
-            res.status(200).json({
-                message: "Getting feed",
+            };
+            return res.status(200).json({
                 user: user,
             });
-        res.status(400);
+        }
+        return res.status(400).json({erro: "Invalid port"});
     }
 
     // ROUTES
@@ -101,8 +107,9 @@ export default class Router {
             this.followHandler(node, req, res);
         });
 
-        app.post("/unfollow", this.unfollowHandler.bind(node));
-
+        app.post("/unfollow", (req, res) => {
+            this.unfollowHandler(node, req, res);
+        });
         app.get("/feed", (req, res) => {
             this.feedHandler(node, req, res);
         });
@@ -111,10 +118,10 @@ export default class Router {
         });
         app.get("/users", (req, res) => {
             this.usersHandler(node, req, res);
-        })
+        });
         app.get("/profile", (req, res) => {
             this.profileHandler(node, req, res);
-        })
+        });
     }
 
     static createPort(node, port = 0) {
