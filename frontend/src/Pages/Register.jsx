@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../Utils/api";
 import Logo from "../logo.svg";
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
 
   const [port, setPort] = useState(3001);
@@ -11,6 +11,7 @@ export default function Login() {
   const [inputValues, setInputValue] = useState({
     username: "",
     password: "",
+    confirmPassword: "",
   });
 
   const [validation, setValidation] = useState({
@@ -25,21 +26,16 @@ export default function Login() {
     if (!isValid) return;
 
     api
-      .post("login/", port, {
+      .post("register/", port, {
         username: inputValues.username,
         password: inputValues.password,
       })
       .then((res) => {
-        console.log("Login response:", res.data);
-
-        const newPort = res.data.port;
-        sessionStorage.setItem("port", newPort);
-        setPort(newPort);
-
-        navigate("/feed");
+        console.log("Register response:", res.data);
+        navigate("/login");
       })
       .catch((err) => {
-        console.log("Login error:" + err);
+        console.log("Register error:" + err);
       });
   };
 
@@ -68,6 +64,17 @@ export default function Login() {
       errors.password = "";
     }
 
+    // confirm password validation
+    if (!inputValues.confirmPassword.trim()) {
+      result = false;
+      errors.password = "confirmPasswordMissingError";
+    } else if (inputValues.confirmPassword !== inputValues.password) {
+      result = false;
+      errors.password = "passwordsDontMatchError";
+    } else {
+      errors.password = "";
+    }
+
     setValidation(errors);
     return result;
   };
@@ -86,11 +93,13 @@ export default function Login() {
           style={{ width: 130, height: 130 }}
           className="img-fluid"
         ></img>
-        <p className="mt-0" style={{color: "#1D9BF0"}}>Welcome to PiuPiu</p>
+        <p className="mt-0" style={{ color: "#1D9BF0" }}>
+          Welcome to PiuPiu
+        </p>
       </div>
       <div className="row col-sm-8 col-md-5 col-12 px-4">
-        <div className="col-12 mb-4">
-          <h1 className="w-100">Login</h1>
+        <div className="col-12 mb-2">
+          <h3 className="w-100">Register</h3>
         </div>
         <form onSubmit={onSubmit}>
           <div className="form-group mt-3">
@@ -134,12 +143,33 @@ export default function Login() {
               </div>
             )}
           </div>
+          <div className="form-group mt-3">
+            <label htmlFor="password" className="mb-1">
+              Confirm Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              className={
+                "form-control rounded-pill bg-secondary border border-0" +
+                (validation.password ? " is-invalid" : "")
+              }
+              onChange={(e) => handleChange(e)}
+              value={inputValues.password}
+            />
+            {validation.password && (
+              <div className="invalid-feedback">
+                {"Error: " + validation.password}
+              </div>
+            )}
+          </div>
           <div className="form-group mt-5 d-flex justify-content-between">
             <span>
-              Do not have an account yet? <a href="/register">Register</a>
+              Already have an account? <a href="/login">Login</a>
             </span>
             <button type="submit" className="btn btn-primary rounded-pill">
-              Login
+              Register
             </button>
           </div>
         </form>
