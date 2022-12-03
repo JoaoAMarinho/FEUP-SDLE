@@ -69,7 +69,21 @@ export default class Router {
         res.status(200).json(users);
     }
 
-    static async profileHandler(req, res) {}
+    static async profileHandler(req, res) {
+        if (node.port !== 3001)
+            user = {
+                username: node.username,
+                followers: node.followers,
+                following: node.following,
+                timeline: node.timeline,
+                posts: node.posts,
+            }
+            res.status(200).json({
+                message: "Getting feed",
+                user: user,
+            });
+        res.status(400);
+    }
 
     // ROUTES
     static setupRoutes(node, app) {
@@ -98,7 +112,9 @@ export default class Router {
         app.get("/users", (req, res) => {
             this.usersHandler(node, req, res);
         })
-        app.get("/profile", this.profileHandler.bind(node));
+        app.get("/profile", (req, res) => {
+            this.profileHandler(node, req, res);
+        })
     }
 
     static createPort(node, port = 0) {
