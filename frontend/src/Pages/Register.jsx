@@ -17,6 +17,7 @@ export default function Register() {
     const [validation, setValidation] = useState({
         username: "",
         password: "",
+        confirmPassword: "",
     });
 
     const onSubmit = (e) => {
@@ -50,7 +51,7 @@ export default function Register() {
         // username validation
         if (!inputValues.username.trim()) {
             result = false;
-            errors.username = "usernameMissingError";
+            errors.username = "Please enter an username.";
         } else {
             errors.username = "";
         }
@@ -58,7 +59,7 @@ export default function Register() {
         // password validation
         if (!inputValues.password.trim()) {
             result = false;
-            errors.password = "passwordMissingError";
+            errors.password = "Please enter a password.";
         } else {
             errors.password = "";
         }
@@ -66,11 +67,13 @@ export default function Register() {
         // confirm password validation
         if (!inputValues.confirmPassword.trim()) {
             result = false;
-            errors.password = "confirmPasswordMissingError";
+            errors.confirmPassword = "Please enter a password confirmation.";
         } else if (inputValues.confirmPassword !== inputValues.password) {
             result = false;
-            errors.password = "passwordsDontMatchError";
+            errors.confirmPassword = "Passwords don't match.";
+            errors.password = "Passwords don't match.";
         } else {
+            errors.confirmPassword = "";
             errors.password = "";
         }
 
@@ -85,14 +88,14 @@ export default function Register() {
 
     return (
         <div className="container d-flex justify-content-center align-items-center flex-column h-100">
-            <div className="position-absolute top-0 start-0 mt-2 ms-5">
+            <div className="top-0 start-0 mt-2 ms-5 mb-3 mb-sm-0">
                 <img
                     src={Logo}
                     alt="PiuPiu Logo"
                     style={{ width: 130, height: 130 }}
                     className="img-fluid"
                 ></img>
-                <p className="mt-0" style={{ color: "#1D9BF0" }}>
+                <p className="mt-0 d-none d-sm-block" style={{ color: "#1D9BF0" }}>
                     Welcome to PiuPiu
                 </p>
             </div>
@@ -117,7 +120,7 @@ export default function Register() {
                         />
                         {validation.username && (
                             <div className="invalid-feedback">
-                                {"Error: " + validation.username}
+                                {validation.username}
                             </div>
                         )}
                     </div>
@@ -138,7 +141,7 @@ export default function Register() {
                         />
                         {validation.password && (
                             <div className="invalid-feedback">
-                                {"Error: " + validation.password}
+                                {validation.password}
                             </div>
                         )}
                     </div>
@@ -149,17 +152,17 @@ export default function Register() {
                         <input
                             id="password"
                             type="password"
-                            name="password"
+                            name="confirmPassword"
                             className={
                                 "form-control rounded-pill bg-secondary border border-0" +
-                                (validation.password ? " is-invalid" : "")
+                                (validation.confirmPassword ? " is-invalid" : "")
                             }
                             onChange={(e) => handleChange(e)}
-                            value={inputValues.password}
+                            value={inputValues.confirmPassword}
                         />
-                        {validation.password && (
+                        {validation.confirmPassword && (
                             <div className="invalid-feedback">
-                                {"Error: " + validation.password}
+                                {validation.confirmPassword}
                             </div>
                         )}
                     </div>
