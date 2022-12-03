@@ -8,13 +8,22 @@ import {
     HiOutlineLogout,
 } from "react-icons/hi";
 import Logo from "../logo.svg";
+import api from "../Utils/api";
 
 // TODO: fix navbar responsiveness
 export default function NavBar() {
     const location = useLocation();
 
     const logout = () => {
-        console.log("logout");
+      console.log("logout");
+      api
+        .post("logout/", sessionStorage.getItem("port"))
+        .then((_) => {
+          sessionStorage.removeItem("port");
+        })
+        .catch((err) => {
+          console.log("Erro logout:" + err);
+        });
     };
 
     return (
