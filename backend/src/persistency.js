@@ -105,14 +105,14 @@ export default class Persistency {
         fs.writeFileSync(followersFile, JSON.stringify(followers));
     }
 
-    static saveTimeline(timeline) {
+    static saveTimeline(timeline, username) {
         const dir = "./posts";
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir);
         }
 
         fs.writeFileSync(
-            `./post/${this.getUserHash()}.txt`,
+            `./posts/${hash(username)}.txt`,
             JSON.stringify(timeline)
         );
     }

@@ -47,12 +47,16 @@ export default class Router {
     }
 
     static async feedHandler(node, _, res) {
-        let feed = node.timeline;
+        console.log("feed", node.username)
+        const feed = [].concat(node.timeline)
+        console.log(feed)
+        console.log(node.feed)
         Object.values(node.feed).forEach((val) => {
+            console.log(val)
             feed.push(...val);
         });
         feed.sort((v1, v2) => v2.date - v1.date);
-
+        
         return res.status(200).json({
             feed: feed,
         });

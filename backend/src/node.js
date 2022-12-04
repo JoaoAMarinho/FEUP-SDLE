@@ -30,10 +30,6 @@ export class Node {
         await this.createNode();
     }
 
-    getUserHash() {
-        return hash(this.username);
-    }
-
     createNode = async () => {
         this.node = await createLibp2p({
             addresses: {
@@ -264,10 +260,10 @@ export class Node {
         };
 
         this.timeline.push(messageObject);
-        Persistency.saveTimeline(this.timeline);
+        Persistency.saveTimeline(this.timeline, this.username);
 
         //share message with followers
-        const topic = `feed/${this.getUserHash()}`;
+        const topic = `feed/${hash(this.username)}`;
         this.node.pubsub.publish(
             topic,
             str2array(JSON.stringify(messageObject))
@@ -295,8 +291,9 @@ export class Node {
             const topic = `feed/${hash(username)}`;
 
             this.node.pubsub.addEventListener("message", (evt) => {
+                console.log(this.username, "Event received", evt)
                 const msg = JSON.parse(array2str(evt.detail.data));
-                this.feed[username].push(msg);
+                if(!this.feed[username].includes(msg)) this.feed[username].push(msg);
             });
             this.node.pubsub.subscribe(topic);
             this.following.push(username);
@@ -342,8 +339,12 @@ export class Node {
                 }
             }
 
+            console.log(this.username,"pushing feed", this.feed, "with posts", posts )
             posts.forEach((elem) => {
-                this.feed[username].push(elem);
+                if(!this.feed[username].includes(elem)){
+                    console.log(this.username, "push", elem)
+                    this.feed[username].push(elem);
+                }
             });
             this.providePosts(cid);
             this.handleProvideFollowingPosts(username);
@@ -592,6 +593,7 @@ export class Node {
 
     listUsers = async () => {
         const key = str2array("users");
+        // TODO add try catch
         let usernames = await this.node.contentRouting.get(key);
         usernames = JSON.parse(array2str(usernames));
 

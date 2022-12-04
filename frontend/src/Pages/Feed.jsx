@@ -13,6 +13,7 @@ export default function Feed() {
     const fetchFeed = () => {
         api.get("feed/", port)
             .then((res) => {
+                console.log(res.data)
                 console.log("Feed response:", res.data.feed);
                 setFeed(res.data.feed ? res.data.feed : []);
             })
