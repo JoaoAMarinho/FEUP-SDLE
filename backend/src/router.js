@@ -21,7 +21,7 @@ export default class Router {
         console.log("login");
         const { username, password } = req.body;
         const response = await node.login(username, password);
-        console.log(response);
+
         if (response.error) return res.status(400).json(response);
 
         res.status(200).json({
