@@ -169,7 +169,7 @@ export default function Register() {
                             </div>
                         )}
                     </div>
-                    <MessageBox messages={messages} />
+                    <MessageBox messages={messages} setMessages={setMessages} />
                     <div className="form-group mt-4 d-flex justify-content-between align-items-center">
                         <span>
                             Already have an account?{" "}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 
 MessageBox.propTypes = {
@@ -23,7 +23,7 @@ export default function MessageBox(props) {
                     <button
                         type="button"
                         className="btn-close"
-                        data-bs-dismiss="alert"
+                        onClick={() => {props.messages.splice(i,1); props.setMessages([...props.messages]);}}
                         aria-label="Close"
                     ></button>
                     <strong>{m.message}</strong>
@@ -33,6 +33,9 @@ export default function MessageBox(props) {
 
         return messageAlerts;
     };
+
+    useEffect(() => {
+    }, [props.messages]);
 
     return (
         <div className="messageBoxContainer mt-3 w-100">{buildMessages()}</div>

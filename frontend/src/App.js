@@ -7,14 +7,13 @@ import Register from "./Pages/Register";
 import Feed from "./Pages/Feed";
 import Profile from "./Pages/Profile";
 import Users from "./Pages/Users";
-import Test from "./Components/Test";
 
 function App() {
   return (
     <div className="App d-flex flex-column position-relative">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Test />} />
+          <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/feed" element={<Feed />} />
