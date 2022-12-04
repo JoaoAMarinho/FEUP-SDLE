@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../Utils/api";
-import Logo from "../logo.svg";
+import MessageBox from "../Components/MessageBox";
+import PiuPiu from "../Components/PiuPiu";
 
 export default function Register() {
     const navigate = useNavigate();
 
     const [port, setPort] = useState(3001);
+
+    const [messages, setMessages] = useState([]);
+    const pushMessage = (status, message) => {
+        setMessages((messages) => [...messages, { status, message }]);
+    };
 
     const [inputValues, setInputValue] = useState({
         username: "",
@@ -35,7 +41,14 @@ export default function Register() {
                 navigate("/login");
             })
             .catch((err) => {
-                console.log("Register error:", err);
+                const response = err.response;
+                if (response) {
+                    pushMessage(0, response.data.error);
+                    console.log("Register error:", response.data.error);
+                } else {
+                    pushMessage(0, "Unknwon error, try again.");
+                    console.log("Register error:", err);
+                }
             });
     };
 
@@ -88,17 +101,7 @@ export default function Register() {
 
     return (
         <div className="container d-flex justify-content-center align-items-center flex-column h-100">
-            <div className="top-0 start-0 mt-2 ms-5 mb-3 mb-sm-0">
-                <img
-                    src={Logo}
-                    alt="PiuPiu Logo"
-                    style={{ width: 130, height: 130 }}
-                    className="img-fluid"
-                ></img>
-                <p className="mt-0 d-none d-sm-block" style={{ color: "#1D9BF0" }}>
-                    Welcome to PiuPiu
-                </p>
-            </div>
+            <PiuPiu />
             <div className="row col-md-8 col-lg-6 col-xl-5 col-10 px-4">
                 <div className="col-12 mb-2">
                     <h3 className="w-100">Register</h3>
@@ -166,7 +169,8 @@ export default function Register() {
                             </div>
                         )}
                     </div>
-                    <div className="form-group mt-5 d-flex justify-content-between align-items-center">
+                    <MessageBox messages={messages} />
+                    <div className="form-group mt-4 d-flex justify-content-between align-items-center">
                         <span>
                             Already have an account?{" "}
                             <a href="/login" style={{ color: "#1D9BF0" }}>
