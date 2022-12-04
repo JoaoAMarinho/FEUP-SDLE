@@ -47,12 +47,8 @@ export default class Router {
     }
 
     static async feedHandler(node, _, res) {
-        console.log("feed", node.username)
         const feed = [].concat(node.timeline)
-        console.log(feed)
-        console.log(node.feed)
         Object.values(node.feed).forEach((val) => {
-            console.log(val)
             feed.push(...val);
         });
         feed.sort((v1, v2) => v2.date - v1.date);
@@ -72,8 +68,9 @@ export default class Router {
     }
 
     static async usersHandler(node, _, res) {
-        const users = await node.listUsers();
-        return res.status(200).json(users);
+        console.log("users")
+        const response = await node.listUsers();
+        return res.status(response.error ? 400 : 200).json(response);
     }
 
     static async profileHandler(node, _, res) {
