@@ -4,6 +4,7 @@ import api from "../Utils/api";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [changes, setChanges] = useState(false);
   const [port, setPort] = useState(sessionStorage.getItem("port"));
 
   const fetchUsers = () => {
@@ -27,6 +28,7 @@ export default function Users() {
       .post("follow/", port, { username: user.username })
       .then((res) => {
         console.log("Response:", res.data);
+        setChanges(!changes)
       })
       .catch((err) => {
         console.log("Error following user:", err);
@@ -40,6 +42,7 @@ export default function Users() {
       .post("unfollow/", port, { username: user.username })
       .then((res) => {
         console.log("Response:", res.data);
+        setChanges(!changes)
       })
       .catch((err) => {
         console.log("Error unfollowing user:", err);
@@ -48,12 +51,11 @@ export default function Users() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [changes]);
 
   return (
     <>
       <NavBar />
-      <button onClick={fetchUsers}> Refresh Users </button>
       <div className="container mt-5">
         <ul className="list-group bg-transparent border-0">
           {users.map((user) => {
