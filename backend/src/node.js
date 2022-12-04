@@ -13,20 +13,21 @@ import * as json from "multiformats/codecs/json";
 import { sha256 } from "multiformats/hashes/sha2";
 import all from "it-all";
 import { str2array, array2str, hash } from "./utils.js";
-import fs, { writeFile } from "fs";
-import Router from "./router.js";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import Router from "./router.js";
+import Persistency from "./persistency.js";
 
 export class Node {
     async init(port, username = "default") {
         this.port = await Router.createPort(this, port);
         this.username = username;
-        await this.createNode();
-        this.timeline = [];
+        this.timeline = Persistency.loadTimeline(this);
         this.feed = {};
         this.followers = [];
         this.following = [];
+
+        await this.createNode();
     }
 
     getUserHash() {
@@ -61,12 +62,11 @@ export class Node {
 
         if (this.port !== 3001) {
             this.node.addEventListener("peer:discovery", this.sharePort);
-            this.node.addEventListener("peer:discovery", this.updateDht);
+            this.node.addEventListener("peer:discovery", this.setPeerId);
             this.node.addEventListener(
                 "peer:discovery",
                 this.requestFollowingPosts
             );
-            // this.node.addEventListener('peer:discovery', this.updateDht);
         }
 
         //Set route to receive follow requests
@@ -105,26 +105,24 @@ export class Node {
         });
     };
 
-    updateDht = async () => {
+    setPeerId = async () => {
         const key = str2array(this.username);
 
         let data = {};
         try {
             data = await this.node.contentRouting.get(key);
             data = JSON.parse(array2str(data));
-        } catch (err) {
-            // do nothing
-            console.log(err);
+        } catch (_) {
+            // Did not find peers yet
             return;
         }
 
         data.peerId = this.node.peerId.toString();
-        console.log("update", data);
         await this.node.contentRouting.put(
             key,
             str2array(JSON.stringify(data))
         );
-        this.node.removeEventListener("peer:discovery", this.updateDht);
+        this.node.removeEventListener("peer:discovery", this.setPeerId);
     };
 
     sharePort = async (evt) => {
@@ -155,6 +153,7 @@ export class Node {
                 str2array(username)
             );
             const content = JSON.parse(array2str(data));
+
             if (content.password !== password) {
                 return { error: "Invalid password!" };
             }
@@ -167,7 +166,7 @@ export class Node {
 
         const port = await portPromise;
 
-        return { port: port };
+        return { success: "Logged in!", port: port };
     };
 
     logout = async () => {
@@ -227,16 +226,7 @@ export class Node {
             str2array(JSON.stringify(data))
         );
 
-        const dir = "users";
-        const usersFile = `./users/accounts.txt`;
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
-        }
-        let users = [];
-        if (fs.existsSync(usersFile))
-            users = JSON.parse(fs.readFileSync(usersFile));
-        users.push({ user: username, password: password });
-        fs.writeFileSync(usersFile, JSON.stringify(users));
+        Persistency.saveUser({ username, password });
 
         return { success: "User created!" };
     };
@@ -244,11 +234,6 @@ export class Node {
     post = (message) => {
         if (!this.node.isStarted()) {
             return { error: "Node starting" };
-        }
-        var dir = "./post";
-
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
         }
 
         const messageObject = {
@@ -258,10 +243,7 @@ export class Node {
         };
 
         this.timeline.push(messageObject);
-        fs.writeFileSync(
-            `./post/${this.getUserHash()}.txt`,
-            JSON.stringify(this.timeline)
-        );
+        Persistency.saveTimeline(this.timeline);
 
         //share message with followers
         const topic = `feed/${this.getUserHash()}`;
@@ -269,6 +251,8 @@ export class Node {
             topic,
             str2array(JSON.stringify(messageObject))
         );
+
+        return { success: "Posted message!" };
     };
 
     follow = async (username) => {
@@ -401,9 +385,7 @@ export class Node {
                 pipe(stream, async function (source) {
                     for await (const msg of source) {
                         const str = uint8ArrayToString(msg.subarray());
-                        console.log(
-                            `Received port: ${str}`
-                        );
+                        console.log(`Received port: ${str}`);
                         resolve(parseInt(str));
                     }
                 }).finally(() => {
@@ -573,34 +555,25 @@ export class Node {
     };
 
     loadAccounts = async () => {
-        const dir = "users";
-        const usersFile = `./users/accounts.txt`;
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
-        }
-        if (!fs.existsSync(usersFile)) return;
-        const users = JSON.parse(fs.readFileSync(usersFile));
-        const usersList = [];
+        const accounts = Persistency.loadAccounts(this);
+        const accountsList = [];
 
-        for (const user of users) {
-            const usernameArray = str2array(user.user);
+        for (const account of accounts) {
+            const usernameArray = str2array(account.username);
             // Register user + pass in DHT of user entry
-            const password = user.password;
-            const content = {
-                password: password,
-            };
+            const content = { password: account.password };
             await this.node.contentRouting.put(
                 usernameArray,
                 str2array(JSON.stringify(content))
             );
-            usersList.push(user.user);
+            accountsList.push(account.username);
         }
 
         //Register user in DHT of users list
         const key = str2array("users");
         await this.node.contentRouting.put(
             key,
-            str2array(JSON.stringify(usersList))
+            str2array(JSON.stringify(accountsList))
         );
     };
 }

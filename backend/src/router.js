@@ -8,34 +8,26 @@ export default class Router {
         const { username, password } = req.body;
 
         const response = await node.register(username, password);
-        console.log(response);
+        console.log("Register:", response);
 
-        if (response.error) return res.status(400).json(response);
-
-        res.status(200).json({
-            ...response,
-        });
+        return res.status(response.error ? 400 : 200).json(response);
     }
 
     static async loginHandler(node, req, res) {
-        console.log("login");
         const { username, password } = req.body;
+
         const response = await node.login(username, password);
+        console.log("Login:", response);
 
-        if (response.error) return res.status(400).json(response);
-
-        res.status(200).json({
-            message: "Login user",
-            port: response.port, // TODO fix this must not be a return from the method!!
-        });
+        return res.status(response.error ? 400 : 200).json(response);
     }
 
     static async logoutHandler(node, req, res) {
         console.log("logout");
         const response = await node.logout();
         console.log(response);
-        if(response.error) return res.status(400).json(response);
-        res.status(200).json(response)
+        if (response.error) return res.status(400).json(response);
+        res.status(200).json(response);
     }
 
     static async followHandler(node, req, res) {
@@ -54,35 +46,35 @@ export default class Router {
         return res.status(200).json(response);
     }
 
-    static async feedHandler(node, req, res) {
-        // TODO append all timelines from following users and sort by timestamp
-        let feed = [];
-        Object.keys(node.feed).forEach(key => {
-            node.feed[key].forEach( (message) => {
-                feed.push(message)
-            })  
-        })
-        res.status(200).json({
-            message: "Getting feed",
+    static async feedHandler(node, _, res) {
+        let feed = node.timeline;
+        Object.values(node.feed).forEach((val) => {
+            feed.push(...val);
+        });
+        feed.sort((v1, v2) => v2.date - v1.date);
+
+        return res.status(200).json({
             feed: feed,
         });
-        
     }
 
     static async postHandler(node, req, res) {
-        console.log("Post: ", req.body)
         const { message } = req.body;
-        node.post(message)
+
+        const response = node.post(message);
+        console.log("Post:", response);
+
+        return res.status(response.error ? 400 : 200).json(response);
     }
 
-    static async usersHandler(node, req, res) {
+    static async usersHandler(node, _, res) {
         const users = await node.listUsers();
         return res.status(200).json(users);
     }
 
-    static async profileHandler(node, req, res) {
+    static async profileHandler(node, _, res) {
         if (node.port !== 3001) {
-            console.log('profile');
+            console.log("profile");
             const user = {
                 username: node.username,
                 followers: node.followers,
@@ -93,7 +85,7 @@ export default class Router {
                 user: user,
             });
         }
-        return res.status(400).json({erro: "Invalid port"});
+        return res.status(400).json({ erro: "Invalid port" });
     }
 
     // ROUTES
@@ -104,8 +96,8 @@ export default class Router {
         app.post("/login", (req, res) => {
             this.loginHandler(node, req, res);
         });
-        app.post("/logout", (req,res) => {
-            this.logoutHandler(node, req, res)
+        app.post("/logout", (req, res) => {
+            this.logoutHandler(node, req, res);
         });
 
         app.post("/follow", (req, res) => {
