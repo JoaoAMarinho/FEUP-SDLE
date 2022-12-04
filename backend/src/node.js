@@ -123,15 +123,17 @@ export class Node {
             data = await this.node.contentRouting.get(key);
             data = JSON.parse(array2str(data));
         } catch (_) {
+            console.log("Error")
             // Did not find peers yet
             return;
         }
 
         data.peerId = this.node.peerId.toString();
-        await this.node.contentRouting.put(
+        this.node.contentRouting.put(
             key,
             str2array(JSON.stringify(data))
         );
+        // this.
         this.node.removeEventListener("peer:discovery", this.setPeerId);
     };
 

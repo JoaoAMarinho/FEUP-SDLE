@@ -93,7 +93,7 @@ export default function Users() {
             <NavBar />
             <div className="container mt-5">
                 <ul className="list-group bg-transparent border-0">
-                    {mockUsers.map((user) => {
+                    {users.map((user) => {
                         return (
                             <li
                                 key={`id_${user.username}`}
