@@ -80,6 +80,7 @@ export class Node {
                     );
                     this.followers.push(str.username);
                     this.sharePosts(peerId);
+                    Persistency.updateFollowers(this.username, str.username);
                 }
             }).finally(() => {
                 // clean up resources
@@ -97,12 +98,20 @@ export class Node {
                     );
                     const index = this.followers.indexOf(str.username);
                     this.followers.splice(index, 1);
+                    Persistency.updateFollowers(
+                        this.username,
+                        str.username,
+                        false
+                    );
                 }
             }).finally(() => {
                 // clean up resources
                 data.stream.close();
             });
         });
+
+        console.log("booas")
+        this.handleRequestPort();
     };
 
     setPeerId = async () => {
@@ -147,12 +156,13 @@ export class Node {
             return { error: "Node starting" };
         }
         password = hash(password);
-
+        
+        let content = {};
         try {
             const data = await this.node.contentRouting.get(
                 str2array(username)
             );
-            const content = JSON.parse(array2str(data));
+            content = JSON.parse(array2str(data));
 
             if (content.password !== password) {
                 return { error: "Invalid password!" };
@@ -162,8 +172,18 @@ export class Node {
         }
 
         let portPromise = this.handleReceivePort(username);
-        new Node().init(0, username);
+        // If peer already connected try to establish connection with node
+        if (content.peerId) {
+            try {
+                const peerID = peerIdFromString(content.peerId);
+                const peerInfo = await this.node.peerRouting.findPeer(peerID);
+                this.requestPort(peerInfo.id, username);
+            } catch (_) {
+                console.log("Could not contact peer", content.peerId);
+            }
+        }
 
+        new Node().init(0, username);
         const port = await portPromise;
 
         return { success: "Logged in!", port: port };
@@ -327,6 +347,8 @@ export class Node {
             this.providePosts(cid);
             this.handleProvideFollowingPosts(username);
 
+            Persistency.updateFollowing(this.username, username);
+
             return { posts: posts };
         } catch (err) {
             console.log(err);
@@ -368,6 +390,8 @@ export class Node {
                 console.log("Send Unfollow");
                 this.sendUnfollow(peerInfo.id, username);
 
+                Persistency.updateFollowing(this.username, username, false);
+
                 return { success: "Unfollow successful." };
             }
 
@@ -398,6 +422,33 @@ export class Node {
             // .catch((err) => {
             //   console.log("Handel error of handler already defined")
             // })
+        });
+    };
+
+    requestPort = async (peerId, username) => {
+        try {
+            const stream = await this.node.dialProtocol(peerId, [`/req_port`]);
+            pipe([username], stream);
+        } catch (err) {}
+    };
+
+    handleRequestPort = async () => {
+        this.node.handle([`/req_port`], (data) => {
+            pipe(data.stream, async function (source) {
+                for await (const msg of source) {
+                    const str = uint8ArrayToString(msg.subarray());
+                    console.log(
+                        `from: ${
+                            data.stream.stat.protocol
+                        }, msg: ${JSON.stringify(str)}`
+                    );
+                    if(str === this.username){
+                        this.sharePort({
+                            detail: { id: data.connection.remotePeer },
+                        });
+                    }
+                }
+            })
         });
     };
 

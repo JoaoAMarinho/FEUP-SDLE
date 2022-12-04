@@ -1,5 +1,5 @@
 import fs from "fs";
-import { str2array, hash } from "./utils.js";
+import { hash } from "./utils.js";
 
 export default class Persistency {
     static loadAccounts() {
@@ -26,7 +26,7 @@ export default class Persistency {
     }
 
     static saveUser(user) {
-        const dir = "./users";
+        let dir = "./users";
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir);
         }
@@ -37,6 +37,72 @@ export default class Persistency {
             users = JSON.parse(fs.readFileSync(usersFile));
         users.push(user);
         fs.writeFileSync(usersFile, JSON.stringify(users));
+
+        dir += `/${user.username}`;
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+        
+        const followingFile = `${dir}/following.txt`;
+        const followersFile = `${dir}/followers.txt`;
+
+        if (fs.existsSync(followingFile))
+            fs.writeFileSync(followingFile, JSON.stringify("[]"));
+
+        if (fs.existsSync(followersFile))
+            fs.writeFileSync(followersFile, JSON.stringify("[]"));
+    }
+
+    static updateFollowing(username, followingUser, follow=true) {
+        let dir = "./users";
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+
+        dir += `/${username}`;
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+
+        const followingFile = `${dir}/following.txt`;
+        let following = [];
+        if (fs.existsSync(followingFile))
+            following = JSON.parse(fs.readFileSync(followingFile));
+
+        if (follow) {
+            following.push(followingUser)
+        } else {
+            const userIndex = following.indexOf(followingUser);
+            if (userIndex != -1) following.splice(userIndex, 1);
+        }
+        
+        fs.writeFileSync(followingFile, JSON.stringify(following));
+    }
+
+    static updateFollowers(username, followerUser, follow=true) {
+        let dir = "./users";
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+
+        dir += `/${username}`;
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+
+        const followersFile = `${dir}/followers.txt`;
+        let followers = []
+        if (fs.existsSync(followersFile))
+            followers = JSON.parse(fs.readFileSync(followersFile));
+
+        if (follow) {
+            followers.push(followerUser);
+        } else {
+            const userIndex = followers.indexOf(followerUser);
+            if (userIndex != -1) followers.splice(userIndex, 1);
+        }
+        
+        fs.writeFileSync(followersFile, JSON.stringify(followers));
     }
 
     static saveTimeline(timeline) {

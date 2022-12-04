@@ -62,7 +62,7 @@ export default function Users() {
             return (
               <li
                 key={`id_${user.username}`}
-                className="list-group-item d-flex justify-content-between"
+                className="list-group-item d-flex justify-content-between align_items-center"
               >
                 <span>{user.username}</span>
                 {user.following ? (
