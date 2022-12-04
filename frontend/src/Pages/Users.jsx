@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import UserCard from "../Components/UserCard";
 import NavBar from "../Components/Navbar";
 import api from "../Utils/api";
 
@@ -6,44 +7,6 @@ export default function Users() {
     const port = sessionStorage.getItem("port");
     const [users, setUsers] = useState([]);
     const [changes, setChanges] = useState(false);
-    const mockUsers = [
-        {
-            username: "user1",
-            following: false,
-        },
-        {
-            username: "user2",
-            following: true,
-        },
-        {
-            username: "user3",
-            following: false,
-        },
-        {
-            username: "user4",
-            following: true,
-        },
-        {
-            username: "user5",
-            following: true,
-        },
-        {
-            username: "user6",
-            following: true,
-        },
-        {
-            username: "user7",
-            following: true,
-        },
-        {
-            username: "user8",
-            following: true,
-        },
-        {
-            username: "user9",
-            following: true,
-        },
-    ];
 
     const fetchUsers = () => {
         console.log("Fetching users...");
@@ -84,6 +47,15 @@ export default function Users() {
             });
     };
 
+    const handleClick = (user) => {
+        if (user.following) {
+            unfollow(user);
+            return;
+        }
+
+        follow(user);
+    };
+
     useEffect(() => {
         fetchUsers();
     }, [changes]);
@@ -92,43 +64,13 @@ export default function Users() {
         <>
             <NavBar />
             <div className="container mt-5">
-                <ul className="list-group bg-transparent border-0">
-                    {mockUsers.map((user) => {
+                <div className="row">
+                    {users.map((user) => {
                         return (
-                            <li
-                                key={`id_${user.username}`}
-                                className="list-group-item d-flex justify-content-between align_items-center"
-                            >
-                                <span>{user.username}</span>
-                                {user.following ? (
-                                    <button
-                                        className="btn btn-primary rounded-pill px-sm-5 px-3 py-2 ms-2 ms-sm-0"
-                                        style={{
-                                            backgroundColor: "#1D9BF0",
-                                            fontWeight: 500,
-                                            fontSize: "1.1rem",
-                                        }}
-                                        onClick={() => unfollow(user)}
-                                    >
-                                        Unfollow
-                                    </button>
-                                ) : (
-                                    <button
-                                        className="btn btn-primary rounded-pill px-sm-5 px-3 py-2 ms-2 ms-sm-0"
-                                        style={{
-                                            backgroundColor: "#1D9BF0",
-                                            fontWeight: 500,
-                                            fontSize: "1.1rem",
-                                        }}
-                                        onClick={() => follow(user)}
-                                    >
-                                        Follow
-                                    </button>
-                                )}
-                            </li>
+                            <UserCard user={user} handleClick={handleClick} />
                         );
                     })}
-                </ul>
+                </div>
             </div>
         </>
     );

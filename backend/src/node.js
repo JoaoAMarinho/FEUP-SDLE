@@ -24,8 +24,8 @@ export class Node {
         this.username = username;
         this.timeline = Persistency.loadTimeline(this);
         this.feed = {};
-        this.followers = [];
-        this.following = [];
+        this.followers = Persistency.loadUserInfo(this, false);
+        this.following = Persistency.loadUserInfo(this, true);
 
         await this.createNode();
     }

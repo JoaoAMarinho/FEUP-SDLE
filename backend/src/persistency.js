@@ -27,6 +27,26 @@ export default class Persistency {
         return JSON.parse(fs.readFileSync(postsFile));
     }
 
+    static loadUserInfo(node, following) {
+        console.log("Loading user info");
+
+        const type = following ? "following" : "followers";
+
+        let dir = "./users";
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+            return [];
+        }
+        dir += `/${node.username}`;
+
+        const file = `${dir}/${type}.txt`;
+
+        if (!fs.existsSync(file)) return [];
+        
+        return JSON.parse(fs.readFileSync(file));
+    }
+
+
     static saveUser(user) {
         console.log("Saving user");
         let dir = "./users";
