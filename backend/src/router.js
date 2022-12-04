@@ -48,7 +48,7 @@ export default class Router {
     }
 
     static async feedHandler(node, _, res) {
-        const feed = node.timeline;
+        const feed = [].concat(node.timeline)
         Object.values(node.feed).forEach((val) => {
             feed.push(...val);
         });
