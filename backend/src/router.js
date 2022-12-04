@@ -23,40 +23,38 @@ export default class Router {
     }
 
     static async logoutHandler(node, req, res) {
-        console.log("logout");
         const response = await node.logout();
-        console.log(response);
-        if (response.error) return res.status(400).json(response);
-        res.status(200).json(response);
+        console.log("Logout:", response);
+
+        return res.status(response.error ? 400 : 200).json(response);
     }
 
     static async followHandler(node, req, res) {
-        console.log("follow");
-
         const { username } = req.body;
+
         const response = await node.follow(username);
-        return res.status(200).json(response);
+        console.log("Follow:", response);
+
+        return res.status(response.error ? 400 : 200).json(response);
     }
 
     static async unfollowHandler(node, req, res) {
-        console.log("unfollow");
-
         const { username } = req.body;
+
         const response = await node.unfollow(username);
-        return res.status(200).json(response);
+        console.log("Unfollow:", response);
+
+        return res.status(response.error ? 400 : 200).json(response);
     }
 
     static async feedHandler(node, _, res) {
-        console.log("feed", node.username)
-        const feed = [].concat(node.timeline)
-        console.log(feed)
-        console.log(node.feed)
+        const feed = node.timeline;
         Object.values(node.feed).forEach((val) => {
-            console.log(val)
             feed.push(...val);
         });
         feed.sort((v1, v2) => v2.date - v1.date);
-        
+
+        console.log("Feed:", feed);
         return res.status(200).json({
             feed: feed,
         });
@@ -73,6 +71,8 @@ export default class Router {
 
     static async usersHandler(node, _, res) {
         const users = await node.listUsers();
+
+        console.log("Users:", users);
         return res.status(200).json(users);
     }
 
@@ -85,11 +85,13 @@ export default class Router {
                 following: node.following,
                 timeline: node.timeline,
             };
+
+            console.log("Profile:", user);
             return res.status(200).json({
                 user: user,
             });
         }
-        return res.status(400).json({ erro: "Invalid port" });
+        return res.status(400).json({ error: "Invalid port" });
     }
 
     // ROUTES

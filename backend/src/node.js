@@ -76,6 +76,8 @@ export class Node {
                     );
                     this.followers.push(str.username);
                     this.sharePosts(peerId);
+
+                    console.log(`${this.node.username} received follow from ${str.username}`);
                     Persistency.updateFollowers(this.username, str.username);
                 }
             }).finally(() => {
@@ -94,6 +96,8 @@ export class Node {
                     );
                     const index = this.followers.indexOf(str.username);
                     this.followers.splice(index, 1);
+
+                    console.log(`${this.node.username} received unfollow from ${str.username}`);
                     Persistency.updateFollowers(
                         this.username,
                         str.username,
@@ -106,11 +110,12 @@ export class Node {
             });
         });
 
-        console.log("booas")
         this.handleRequestPort();
     };
 
     setPeerId = async () => {
+        console.log(`${this.username} setting peerId`);
+
         const key = str2array(this.username);
 
         let data = {};
@@ -138,13 +143,14 @@ export class Node {
             pipe([uint8ArrayFromString(this.port.toString())], stream).finally(
                 this.node.removeEventListener("peer:discovery", this.sharePort)
             );
+            console.log(`${this.username} sharing port`);
         } catch (err) {}
     };
 
     stopNode = async () => {
         // stop libp2p
         await this.node.stop();
-        console.log("Node has stopped!");
+        console.log(`${this.username} stopping`);
     };
 
     login = async (username, password) => {
@@ -431,6 +437,7 @@ export class Node {
         try {
             const stream = await this.node.dialProtocol(peerId, [`/req_port`]);
             pipe([uint8ArrayFromString(username)], stream);
+            console.log(`${this.username} requesting port to ${username}`);
         } catch (err) {
             console.log("Could not request port: ", err)
             return false
@@ -452,6 +459,7 @@ export class Node {
                             detail: { id: data.connection.remotePeer },
                         });
                     }
+                    console.log(`${this.username} sending port to ${str}`);
                 }
             })
         });
@@ -505,6 +513,7 @@ export class Node {
                 data: Date.now().toString(),
             };
             pipe([uint8ArrayFromString(JSON.stringify(content))], stream);
+            console.log(`${this.username} requesting ${username} posts`);
         } catch (err) {
             console.log(`Unable to get posts ${username}.`, err);
             return false;
@@ -526,6 +535,7 @@ export class Node {
                         data.connection.remotePeer,
                         username
                     );
+                    console.log(`${this.username} sending ${username} posts`);
                 }
             }).finally(() => {
                 data.stream.close();
@@ -552,6 +562,7 @@ export class Node {
                 `/posts/${hash(this.username)}`,
             ]);
             pipe([uint8ArrayFromString(JSON.stringify(this.timeline))], stream);
+            console.log(`${this.username} sharing posts`);
         } catch (err) {
             console.log("Error sharing posts.", err);
         }
@@ -564,6 +575,7 @@ export class Node {
             ]);
             const content = this.feed[username] ? this.feed[username] : [];
             pipe([uint8ArrayFromString(JSON.stringify(content))], stream);
+            console.log(`${this.username} sharing ${username} following posts`);
         } catch (err) {
             console.log("Error sharing posts.", err);
         }

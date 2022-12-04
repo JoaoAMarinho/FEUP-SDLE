@@ -3,6 +3,7 @@ import { hash } from "./utils.js";
 
 export default class Persistency {
     static loadAccounts() {
+        console.log("Loading accounts");
         const dir = "./users";
         const usersFile = `./users/accounts.txt`;
         if (!fs.existsSync(dir)) {
@@ -13,6 +14,7 @@ export default class Persistency {
     }
 
     static loadTimeline(node) {
+        console.log("Loading timeline");
         const dir = "./posts";
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir);
@@ -26,6 +28,7 @@ export default class Persistency {
     }
 
     static saveUser(user) {
+        console.log("Saving user");
         let dir = "./users";
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir);
@@ -42,7 +45,7 @@ export default class Persistency {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir);
         }
-        
+
         const followingFile = `${dir}/following.txt`;
         const followersFile = `${dir}/followers.txt`;
 
@@ -53,7 +56,9 @@ export default class Persistency {
             fs.writeFileSync(followersFile, JSON.stringify("[]"));
     }
 
-    static updateFollowing(username, followingUser, follow=true) {
+    static updateFollowing(username, followingUser, follow = true) {
+        console.log("Update followings");
+
         let dir = "./users";
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir);
@@ -70,16 +75,18 @@ export default class Persistency {
             following = JSON.parse(fs.readFileSync(followingFile));
 
         if (follow) {
-            following.push(followingUser)
+            following.push(followingUser);
         } else {
             const userIndex = following.indexOf(followingUser);
             if (userIndex != -1) following.splice(userIndex, 1);
         }
-        
+
         fs.writeFileSync(followingFile, JSON.stringify(following));
     }
 
-    static updateFollowers(username, followerUser, follow=true) {
+    static updateFollowers(username, followerUser, follow = true) {
+        console.log("Update followers");
+
         let dir = "./users";
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir);
@@ -91,7 +98,7 @@ export default class Persistency {
         }
 
         const followersFile = `${dir}/followers.txt`;
-        let followers = []
+        let followers = [];
         if (fs.existsSync(followersFile))
             followers = JSON.parse(fs.readFileSync(followersFile));
 
@@ -101,11 +108,12 @@ export default class Persistency {
             const userIndex = followers.indexOf(followerUser);
             if (userIndex != -1) followers.splice(userIndex, 1);
         }
-        
+
         fs.writeFileSync(followersFile, JSON.stringify(followers));
     }
 
     static saveTimeline(timeline, username) {
+        console.log("Save timeline");
         const dir = "./posts";
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir);

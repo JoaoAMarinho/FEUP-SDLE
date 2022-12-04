@@ -3,7 +3,7 @@ import NavBar from "../Components/Navbar";
 import api from "../Utils/api";
 
 export default function Users() {
-  const [port, setPort] = useState(sessionStorage.getItem("port"));
+  const port = sessionStorage.getItem("port");
   const [user, setUser] = useState({
     username: "",
     following: [],
