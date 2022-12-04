@@ -172,18 +172,19 @@ export class Node {
         }
 
         let portPromise = this.handleReceivePort(username);
+        let createNode = true
         // If peer already connected try to establish connection with node
         if (content.peerId) {
             try {
                 const peerID = peerIdFromString(content.peerId);
                 const peerInfo = await this.node.peerRouting.findPeer(peerID);
-                this.requestPort(peerInfo.id, username);
+                createNode = !await this.requestPort(peerInfo.id, username);
             } catch (_) {
                 console.log("Could not contact peer", content.peerId);
             }
         }
-
-        new Node().init(0, username);
+        
+        if(createNode) new Node().init(0, username);
         const port = await portPromise;
 
         return { success: "Logged in!", port: port };
@@ -428,21 +429,24 @@ export class Node {
     requestPort = async (peerId, username) => {
         try {
             const stream = await this.node.dialProtocol(peerId, [`/req_port`]);
-            pipe([username], stream);
-        } catch (err) {}
+            pipe([uint8ArrayFromString(username)], stream);
+        } catch (err) {
+            console.log("Could not request port: ", err)
+            return false
+        }
+        return true
     };
 
     handleRequestPort = async () => {
         this.node.handle([`/req_port`], (data) => {
-            pipe(data.stream, async function (source) {
+            pipe(data.stream, async(source) => {
                 for await (const msg of source) {
                     const str = uint8ArrayToString(msg.subarray());
                     console.log(
-                        `from: ${
-                            data.stream.stat.protocol
+                        `from: ${data.stream.stat.protocol
                         }, msg: ${JSON.stringify(str)}`
                     );
-                    if(str === this.username){
+                    if (str === this.username) {
                         this.sharePort({
                             detail: { id: data.connection.remotePeer },
                         });
