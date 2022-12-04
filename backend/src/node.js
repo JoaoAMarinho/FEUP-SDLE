@@ -310,8 +310,7 @@ export class Node {
             const cid_hash = await sha256.digest(bytes);
             const cid = CID.create(1, json.code, cid_hash);
 
-            let postsPromise = this.handleReceivePosts(username);
-            let posts = [];
+            this.handleReceivePosts(username, cid);
 
             if (peerId) {
                 const peerID = peerIdFromString(peerId);
@@ -319,10 +318,8 @@ export class Node {
 
                 console.log("Send Follow Request");
                 this.sendFollow(peerInfo.id, username);
-                posts = await postsPromise;
             } else {
                 console.log("User not online");
-
                 // Ask for user posts to providers
                 const providers = await all(
                     this.node.contentRouting.findProviders(cid, {
@@ -331,33 +328,19 @@ export class Node {
                 );
                 let requested = false;
                 if (providers.length > 0) {
-                    providers.forEach((peer) => {
+                    providers.forEach( async (peer) => {
                         console.log("Send Request Posts");
-                        requested |= this.sendRequestPosts(peer.id, username);
+                        if(peer.id !== this.node.peerId) {
+                            const res = await this.sendRequestPosts(peer.id, username);
+                            requested |= res
+                        }
                     });
-                    if (requested) {
-                        posts = await postsPromise;
-                    }
-                }
-                if (!requested) {
-                    console.log("No followers online");
-                    posts = [];
                 }
             }
 
-            console.log(this.username,"pushing feed", this.feed, "with posts", posts )
-            posts.forEach((elem) => {
-                if(!this.feed[username].includes(elem)){
-                    console.log(this.username, "push", elem)
-                    this.feed[username].push(elem);
-                }
-            });
-            this.providePosts(cid);
-            this.handleProvideFollowingPosts(username);
-
             Persistency.updateFollowing(this.username, username);
 
-            return { posts: posts };
+            return { message: "Follow success" };
         } catch (err) {
             console.log(err);
             return { error: "User does not exist!" };
@@ -465,27 +448,37 @@ export class Node {
         });
     };
 
-    handleReceivePosts = async (username) => {
-        return new Promise((resolve) => {
+    handleReceivePosts = async (username, cid) => {
+        try{
             this.node.handle([`/posts/${hash(username)}`], (data) => {
-                pipe(data.stream, async function (source) {
+                pipe(data.stream, async (source) => {
                     for await (const msg of source) {
-                        const str = JSON.parse(
+                        const posts = JSON.parse(
                             uint8ArrayToString(msg.subarray())
                         );
                         console.log(
                             `from: ${
                                 data.stream.stat.protocol
-                            }, msg: ${JSON.stringify(str)}`
+                            }, msg: ${JSON.stringify(posts)}`
                         );
-                        resolve(str);
+
+                        posts.forEach((elem) => {
+                            if (!this.feed[username].includes(elem)) {
+                                this.feed[username].push(elem);
+                            }
+                        });
+                        this.providePosts(cid);
+                        this.handleProvideFollowingPosts(username);
                     }
                 }).finally(() => {
                     data.stream.close();
                     this.node.unhandle([`/posts/${hash(username)}`]);
                 });
-            });
-        });
+            })
+        }catch (err) {
+            console.log(err)
+            console.log(err.code)
+        };
     };
 
     sendFollow = async (peerId, username) => {
@@ -599,15 +592,21 @@ export class Node {
         } catch (err) {}
     };
 
-    providePosts = async (cid) => {
-        await this.node.contentRouting.provide(cid);
+    providePosts = (cid) => {
+        this.node.contentRouting.provide(cid);
     };
 
     listUsers = async () => {
         const key = str2array("users");
+        let usernames = []
         // TODO add try catch
-        let usernames = await this.node.contentRouting.get(key);
-        usernames = JSON.parse(array2str(usernames));
+        try{
+            usernames = await this.node.contentRouting.get(key);
+            usernames = JSON.parse(array2str(usernames));
+        } catch (err) {
+            console.log("Error listing users", err)
+            return {error: "Could not list users!"}
+        }
 
         const idx = usernames.indexOf(this.username);
         if (idx > -1) usernames.splice(idx, 1);
