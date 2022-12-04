@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import MessageBox from "../Components/MessageBox";
 import api from "../Utils/api";
 import PiuPiu from "../Components/PiuPiu";
+import LoadingSpinner from "../Components/LoadingSpinner";
 
 export default function Login() {
     const navigate = useNavigate();
 
     const [port, setPort] = useState(3001);
+    const [isLoading, setIsLoading] = useState(false);
 
     const [messages, setMessages] = useState([]);
     const pushMessage = (status, message) => {
@@ -29,7 +31,7 @@ export default function Login() {
 
         const isValid = checkValidation();
         if (!isValid) return;
-
+        setIsLoading(true);
         api.post("login/", port, {
             username: inputValues.username,
             password: inputValues.password,
@@ -39,10 +41,11 @@ export default function Login() {
 
                 const newPort = res.data.port;
                 sessionStorage.setItem("port", newPort);
-
+                setIsLoading(false);
                 navigate("/feed");
             })
             .catch((err) => {
+                setIsLoading(false);
                 const response = err.response;
                 if (response) {
                     pushMessage(0, response.data.error);
@@ -86,10 +89,12 @@ export default function Login() {
     useEffect(() => {
         const port = sessionStorage.getItem("port");
         if (port) setPort(port);
-    }, []);
+        console.log(isLoading);
+    }, [isLoading]);
 
     return (
         <div className="container d-flex justify-content-center align-items-center flex-column h-100">
+            {isLoading && <LoadingSpinner />}
             <PiuPiu />
             <div className="row col-md-8 col-lg-6 col-xl-5 col-10 px-4">
                 <div className="col-12 mb-4">
@@ -148,6 +153,7 @@ export default function Login() {
                         <button
                             type="submit"
                             className="btn btn-primary rounded-pill px-sm-5 px-3 py-2 ms-2 ms-sm-0"
+                            disabled={isLoading}
                             style={{
                                 backgroundColor: "#1D9BF0",
                                 fontWeight: 500,
