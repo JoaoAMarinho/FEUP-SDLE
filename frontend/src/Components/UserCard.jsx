@@ -7,8 +7,6 @@ UserCard.propTypes = {
 };
 
 export default function UserCard(props) {
-    console.log(props.user);
-
     const mouseOver = (e) => {
         if (e.target.innerText === "Follow") {
             e.target.style.color = "white";
@@ -51,7 +49,7 @@ export default function UserCard(props) {
                             color: "#15202B",
                             borderColor: "#15202B",
                         }}
-                        onClick={props.handleClick}
+                        onClick={() => props.handleClick(props.user)}
                         onMouseOver={mouseOver}
                         onMouseLeave={mouseLeave}
                     >
@@ -62,38 +60,3 @@ export default function UserCard(props) {
         </div>
     );
 }
-
-/*
-<div
-                                key={`id_${user.username}`}
-                                className="col-2"
-                            >
-                                <span>{user.username}</span>
-                                {user.following ? (
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary rounded-pill px-sm-5 px-3 py-2"
-                                        style={{
-                                            backgroundColor: "#1D9BF0",
-                                            fontWeight: 500,
-                                            fontSize: "1.1rem",
-                                        }}
-                                        onClick={() => unfollow(user)}
-                                    >
-                                        Unfollow
-                                    </button>
-                                ) : (
-                                    <button
-                                        className="btn btn-primary rounded-pill px-sm-5 px-3 py-2 ms-2 ms-sm-0"
-                                        style={{
-                                            backgroundColor: "#1D9BF0",
-                                            fontWeight: 500,
-                                            fontSize: "1.1rem",
-                                        }}
-                                        onClick={() => follow(user)}
-                                    >
-                                        Follow
-                                    </button>
-                                )}
-                            </div>
-*/

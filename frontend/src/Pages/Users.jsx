@@ -21,10 +21,10 @@ export default function Users() {
             });
     };
 
-    const follow = (user) => {
-        console.log(`Following ${user}...`);
+    const follow = (username) => {
+        console.log(`Following ${username}...`);
 
-        api.post("follow/", port, { username: user.username })
+        api.post("follow/", port, { username })
             .then((res) => {
                 console.log("Response:", res.data);
                 setChanges(!changes);
@@ -34,10 +34,10 @@ export default function Users() {
             });
     };
 
-    const unfollow = (user) => {
-        console.log(`Unfollowing ${user}...`);
+    const unfollow = (username) => {
+        console.log(`Unfollowing ${username}...`);
 
-        api.post("unfollow/", port, { username: user.username })
+        api.post("unfollow/", port, { username })
             .then((res) => {
                 console.log("Response:", res.data);
                 setChanges(!changes);
@@ -49,11 +49,11 @@ export default function Users() {
 
     const handleClick = (user) => {
         if (user.following) {
-            unfollow(user);
+            unfollow(user.username);
             return;
         }
 
-        follow(user);
+        follow(user.username);
     };
 
     useEffect(() => {
@@ -67,7 +67,7 @@ export default function Users() {
                 <div className="row">
                     {users.map((user) => {
                         return (
-                            <UserCard user={user} handleClick={handleClick} />
+                            <UserCard user={user} handleClick={handleClick } />
                         );
                     })}
                 </div>
