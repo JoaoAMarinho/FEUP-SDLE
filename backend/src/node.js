@@ -275,7 +275,7 @@ export class Node {
                 const peerID = peerIdFromString(peerId);
                 // REVIEW - not needed
                 // const peerInfo = await this.node.peerRouting.findPeer(peerID);
-                
+
                 console.log("Send Follow Request");
                 this.sendFollow(peerID, username);
             } else {
@@ -382,7 +382,7 @@ export class Node {
 
     requestPort = async (peerId, username) => {
         try {
-            const stream = await this.node.dialProtocol(peerId, ['/req_port']);
+            const stream = await this.node.dialProtocol(peerId, ["/req_port"]);
             pipe([uint8ArrayFromString(username)], stream);
         } catch (err) {
             console.log("Could not request port: ", err);
@@ -392,7 +392,7 @@ export class Node {
     };
 
     handleRequestPort = async () => {
-        this.node.handle(['/req_port'], (data) => {
+        this.node.handle(["/req_port"], (data) => {
             pipe(data.stream, async (source) => {
                 for await (const msg of source) {
                     const str = uint8ArrayToString(msg.subarray());
@@ -401,7 +401,9 @@ export class Node {
                         this.sharePort({
                             detail: { id: data.connection.remotePeer },
                         });
-                        console.log(`User: '${this.username}' sending port to login request`);
+                        console.log(
+                            `User: '${this.username}' sending port to login request`
+                        );
                     }
                 }
             });
@@ -424,7 +426,7 @@ export class Node {
                             }
                         });
                         this.providePosts(cid);
-v                    }
+                    }
                 }).finally(() => {
                     data.stream.close();
                     this.node.unhandle([`/posts/${hash(username)}`]);
@@ -477,7 +479,7 @@ v                    }
 
     sendFollow = async (peerId, username) => {
         try {
-            const stream = await this.node.dialProtocol(peerId, ['/follow']);
+            const stream = await this.node.dialProtocol(peerId, ["/follow"]);
             const content = {
                 data: Date.now().toString(),
                 username: this.username,
@@ -532,7 +534,7 @@ v                    }
     };
 
     handleFollow = async () => {
-        this.node.handle(['/follow'], (data) => {
+        this.node.handle(["/follow"], (data) => {
             const peerId = data.connection.remotePeer;
             pipe(data.stream, async (source) => {
                 for await (const msg of source) {
