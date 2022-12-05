@@ -48,7 +48,7 @@ export class Node {
             pubsub: gossipsub({ allowPublishToZeroPeers: true }),
         });
 
-        // start libp2p
+        // Start libp2p
         await this.node.start();
 
         console.log("Node created!", this.node.peerId.toString());
@@ -65,60 +65,24 @@ export class Node {
             );
         }
 
-        //Set route to receive follow requests
-        this.node.handle(["/follow"], (data) => {
-            const peerId = data.connection.remotePeer;
-            pipe(data.stream, async (source) => {
-                for await (const msg of source) {
-                    const str = JSON.parse(uint8ArrayToString(msg.subarray()));
-                    console.log(
-                        `from: ${data.stream.stat.protocol}, msg: ${str}`
-                    );
-                    this.followers.push(str.username);
-                    this.sharePosts(peerId);
+        // Set route to receive follow requests
+        this.handleFollow();
 
-                    console.log(
-                        `${this.node.username} received follow from ${str.username}`
-                    );
-                    Persistency.updateFollowers(this.username, str.username);
-                }
-            }).finally(() => {
-                // clean up resources
-                data.stream.close();
-            });
-        });
+        // Set route to receive unfollow requests
+        this.handleUnfollow();
 
-        //Set route to receive unfollow requests
-        this.node.handle(["/unfollow"], (data) => {
-            pipe(data.stream, async (source) => {
-                for await (const msg of source) {
-                    const str = JSON.parse(uint8ArrayToString(msg.subarray()));
-                    console.log(
-                        `from: ${data.stream.stat.protocol}, msg: ${str}`
-                    );
-                    const index = this.followers.indexOf(str.username);
-                    this.followers.splice(index, 1);
-
-                    console.log(
-                        `${this.node.username} received unfollow from ${str.username}`
-                    );
-                    Persistency.updateFollowers(
-                        this.username,
-                        str.username,
-                        false
-                    );
-                }
-            }).finally(() => {
-                // clean up resources
-                data.stream.close();
-            });
-        });
-
+        // Set route to receive port request
         this.handleRequestPort();
     };
 
+    stopNode = async () => {
+        // stop libp2p
+        await this.node.stop();
+        console.log(`${this.username} stopping`);
+    };
+
     setPeerId = async () => {
-        console.log(`${this.username} setting peerId`);
+        console.log(`User: '${this.username}' setting peerId`);
 
         const key = str2array(this.username);
 
@@ -127,7 +91,6 @@ export class Node {
             data = await this.node.contentRouting.get(key);
             data = JSON.parse(array2str(data));
         } catch (_) {
-            console.log("Error");
             // Did not find peers yet
             return;
         }
@@ -146,14 +109,8 @@ export class Node {
             pipe([uint8ArrayFromString(this.port.toString())], stream).finally(
                 this.node.removeEventListener("peer:discovery", this.sharePort)
             );
-            console.log(`${this.username} sharing port`);
+            console.log(`User: '${this.username}' sharing port`);
         } catch (err) {}
-    };
-
-    stopNode = async () => {
-        // stop libp2p
-        await this.node.stop();
-        console.log(`${this.username} stopping`);
     };
 
     login = async (username, password) => {
@@ -176,7 +133,7 @@ export class Node {
             return { error: "User does not exist!" };
         }
 
-        let portPromise = this.handleReceivePort(username);
+        const portPromise = this.handleReceivePort(username);
         let createNode = true;
         // If peer already connected try to establish connection with node
         if (content.peerId) {
@@ -294,16 +251,14 @@ export class Node {
         try {
             const data = await this.node.contentRouting.get(usernameArray);
             const content = JSON.parse(array2str(data));
-            console.log(content);
 
             this.feed[username] = [];
             const topic = `feed/${hash(username)}`;
 
             this.node.pubsub.addEventListener("message", (evt) => {
-                console.log(this.username, "Event received", evt);
                 const msg = JSON.parse(array2str(evt.detail.data));
-                if (!this.feed[username].includes(msg))
-                    this.feed[username].push(msg);
+                // REVIEW - not needed if (!this.feed[username].includes(msg))
+                this.feed[username].push(msg);
             });
             this.node.pubsub.subscribe(topic);
             this.following.push(username);
@@ -318,10 +273,11 @@ export class Node {
 
             if (peerId) {
                 const peerID = peerIdFromString(peerId);
-                const peerInfo = await this.node.peerRouting.findPeer(peerID);
+                // REVIEW - not needed
+                // const peerInfo = await this.node.peerRouting.findPeer(peerID);
 
                 console.log("Send Follow Request");
-                this.sendFollow(peerInfo.id, username);
+                this.sendFollow(peerID, username);
             } else {
                 console.log("User not online");
 
@@ -354,7 +310,6 @@ export class Node {
 
             return { message: "Follow success" };
         } catch (err) {
-            console.log(err);
             return { error: "User does not exist!" };
         }
     };
@@ -427,9 +382,8 @@ export class Node {
 
     requestPort = async (peerId, username) => {
         try {
-            const stream = await this.node.dialProtocol(peerId, [`/req_port`]);
+            const stream = await this.node.dialProtocol(peerId, ["/req_port"]);
             pipe([uint8ArrayFromString(username)], stream);
-            console.log(`${this.username} requesting port to ${username}`);
         } catch (err) {
             console.log("Could not request port: ", err);
             return false;
@@ -438,21 +392,19 @@ export class Node {
     };
 
     handleRequestPort = async () => {
-        this.node.handle([`/req_port`], (data) => {
+        this.node.handle(["/req_port"], (data) => {
             pipe(data.stream, async (source) => {
                 for await (const msg of source) {
                     const str = uint8ArrayToString(msg.subarray());
-                    console.log(
-                        `from: ${
-                            data.stream.stat.protocol
-                        }, msg: ${JSON.stringify(str)}`
-                    );
+
                     if (str === this.username) {
                         this.sharePort({
                             detail: { id: data.connection.remotePeer },
                         });
+                        console.log(
+                            `User: '${this.username}' sending port to login request`
+                        );
                     }
-                    console.log(`${this.username} sending port to ${str}`);
                 }
             });
         });
@@ -466,19 +418,14 @@ export class Node {
                         const posts = JSON.parse(
                             uint8ArrayToString(msg.subarray())
                         );
-                        console.log(
-                            `from: ${
-                                data.stream.stat.protocol
-                            }, msg: ${JSON.stringify(posts)}`
-                        );
 
                         posts.forEach((elem) => {
+                            // REVIEW - does not work
                             if (!this.feed[username].includes(elem)) {
                                 this.feed[username].push(elem);
                             }
                         });
                         this.providePosts(cid);
-                        this.handleProvideFollowingPosts(username);
                     }
                 }).finally(() => {
                     data.stream.close();
@@ -491,22 +438,6 @@ export class Node {
         }
     };
 
-    sendFollow = async (peerId, username) => {
-        try {
-            const stream = await this.node.dialProtocol(peerId, [`/follow`]);
-            const content = {
-                data: Date.now().toString(),
-                username: this.username,
-            };
-            pipe([uint8ArrayFromString(JSON.stringify(content))], stream);
-        } catch (err) {
-            console.log(
-                `Error following ${username}. Unable to get posts.`,
-                err
-            );
-        }
-    };
-
     sendRequestPosts = async (peerId, username) => {
         try {
             const stream = await this.node.dialProtocol(peerId, [
@@ -516,12 +447,12 @@ export class Node {
                 data: Date.now().toString(),
             };
             pipe([uint8ArrayFromString(JSON.stringify(content))], stream);
-            console.log(`${this.username} requesting ${username} posts`);
+            console.log(`'${this.username}' requesting '${username}' posts`);
+            return true;
         } catch (err) {
-            console.log(`Unable to get posts ${username}.`, err);
+            console.log(`Unable to get posts from '${username}'`, err);
             return false;
         }
-        return true;
     };
 
     handleProvideFollowingPosts = async (username) => {
@@ -546,6 +477,22 @@ export class Node {
         });
     };
 
+    sendFollow = async (peerId, username) => {
+        try {
+            const stream = await this.node.dialProtocol(peerId, ["/follow"]);
+            const content = {
+                data: Date.now().toString(),
+                username: this.username,
+            };
+            pipe([uint8ArrayFromString(JSON.stringify(content))], stream);
+        } catch (err) {
+            console.log(
+                `Error following ${username}. Unable to get posts.`,
+                err
+            );
+        }
+    };
+
     sendUnfollow = async (peerId, username) => {
         try {
             const stream = await this.node.dialProtocol(peerId, [`/unfollow`]);
@@ -557,6 +504,55 @@ export class Node {
         } catch (err) {
             console.log(`Error unfollowing ${username}.`, err);
         }
+    };
+
+    handleUnfollow = async () => {
+        this.node.handle(["/unfollow"], (data) => {
+            pipe(data.stream, async (source) => {
+                for await (const msg of source) {
+                    const str = JSON.parse(uint8ArrayToString(msg.subarray()));
+                    console.log(
+                        `from: ${data.stream.stat.protocol}, msg: ${str}`
+                    );
+                    const index = this.followers.indexOf(str.username);
+                    this.followers.splice(index, 1);
+
+                    console.log(
+                        `${this.node.username} received unfollow from ${str.username}`
+                    );
+                    Persistency.updateFollowers(
+                        this.username,
+                        str.username,
+                        false
+                    );
+                }
+            }).finally(() => {
+                // clean up resources
+                data.stream.close();
+            });
+        });
+    };
+
+    handleFollow = async () => {
+        this.node.handle(["/follow"], (data) => {
+            const peerId = data.connection.remotePeer;
+            pipe(data.stream, async (source) => {
+                for await (const msg of source) {
+                    const str = JSON.parse(uint8ArrayToString(msg.subarray()));
+
+                    this.followers.push(str.username);
+                    this.sharePosts(peerId);
+
+                    console.log(
+                        `'${this.node.username}' received follow from '${str.username}'`
+                    );
+                    Persistency.updateFollowers(this.username, str.username);
+                }
+            }).finally(() => {
+                // clean up resources
+                data.stream.close();
+            });
+        });
     };
 
     sharePosts = async (peerInfo) => {
