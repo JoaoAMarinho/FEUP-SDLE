@@ -102,8 +102,9 @@ export default class Router {
         app.post("/login", (req, res) => {
             this.loginHandler(node, req, res);
         });
-        app.post("/logout", (req, res) => {
-            this.logoutHandler(node, req, res);
+        app.post("/logout", async (req, res) => {
+            await this.logoutHandler(node, req, res);
+            node.app.close()
         });
 
         app.post("/follow", (req, res) => {
@@ -138,6 +139,8 @@ export default class Router {
                 `Backend listening on PORT: ${backend.address().port}.\n`
             );
         });
+
+        node.app = backend;
 
         this.setupRoutes(node, app);
 

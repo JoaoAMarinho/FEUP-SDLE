@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import NavBar from "../Components/Navbar";
+import { useNavigate } from "react-router-dom";
 import api from "../Utils/api";
 import { IoMdSend } from "react-icons/io";
 import { AiFillDelete } from "react-icons/ai";
 
 export default function Feed() {
+    const navigate = useNavigate();
     const [port, setPort] = useState(sessionStorage.getItem("port"));
     const [feed, setFeed] = useState([]);
     const [post, setPost] = useState("");
@@ -18,6 +20,10 @@ export default function Feed() {
                 setFeed(res.data.feed ? res.data.feed : []);
             })
             .catch((err) => {
+                if (err.code === "ERR_NETWORK"){
+                    sessionStorage.removeItem("port");
+                    navigate("/login");
+                }
                 console.log("Error fetching feed:", err);
             });
     };
@@ -75,6 +81,7 @@ export default function Feed() {
     useEffect(() => {
         const port = sessionStorage.getItem("port");
         if (port) setPort(port);
+        else navigate("/login");
 
         fetchFeed();
     }, [port]);
