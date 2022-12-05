@@ -214,7 +214,7 @@ export class Node {
         return { success: "User created!" };
     };
 
-    post = (message) => {
+    post = async (message) => {
         if (!this.node.isStarted()) {
             return { error: "Node starting" };
         }
@@ -230,10 +230,12 @@ export class Node {
 
         //share message with followers
         const topic = `feed/${hash(this.username)}`;
-        this.node.pubsub.publish(
+        console.log(this.username, "publish:", topic)
+        const res = await this.node.pubsub.publish(
             topic,
             str2array(JSON.stringify(messageObject))
         );
+        console.log(this.username, "publish results", res)
 
         return { success: "Posted message!" };
     };
@@ -243,7 +245,7 @@ export class Node {
             return { error: "Node starting" };
         }
 
-        if (this.followers.includes(username)) {
+        if (this.following.includes(username)) {
             return { error: "Already following user!" };
         }
 
@@ -255,11 +257,14 @@ export class Node {
             this.feed[username] = [];
             const topic = `feed/${hash(username)}`;
 
+            console.log(this.username, "event:", topic)
             this.node.pubsub.addEventListener("message", (evt) => {
+                console.log(this.username, "event received", evt)
                 const msg = JSON.parse(array2str(evt.detail.data));
                 // REVIEW - not needed if (!this.feed[username].includes(msg))
                 this.feed[username].push(msg);
             });
+            console.log(this.username, "subscribing:", topic)
             this.node.pubsub.subscribe(topic);
             this.following.push(username);
 
@@ -288,16 +293,14 @@ export class Node {
                         })
                     );
 
-                    let requested = false;
                     if (providers.length > 0) {
                         providers.forEach(async (peer) => {
                             console.log("Send Request Posts");
                             if (peer.id !== this.node.peerId) {
-                                const res = await this.sendRequestPosts(
+                                this.sendRequestPosts(
                                     peer.id,
                                     username
                                 );
-                                requested |= res;
                             }
                         });
                     }

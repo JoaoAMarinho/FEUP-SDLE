@@ -63,7 +63,7 @@ export default class Router {
     static async postHandler(node, req, res) {
         const { message } = req.body;
 
-        const response = node.post(message);
+        const response = await node.post(message);
         console.log("Post:", response);
 
         return res.status(response.error ? 400 : 200).json(response);
