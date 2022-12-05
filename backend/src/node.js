@@ -426,6 +426,7 @@ export class Node {
                             }
                         });
                         this.providePosts(cid);
+                        this.handleProvideFollowingPosts(username);
                     }
                 }).finally(() => {
                     data.stream.close();
