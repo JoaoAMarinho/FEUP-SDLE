@@ -6,7 +6,7 @@ import { kadDHT } from "@libp2p/kad-dht";
 import { pipe } from "it-pipe";
 import { CID } from "multiformats/cid";
 import { mdns } from "@libp2p/mdns";
-import { peerIdFromString } from "@libp2p/peer-id";
+import { peerIdFromPeerId, peerIdFromString } from "@libp2p/peer-id";
 import delay from "delay";
 import { gossipsub } from "@chainsafe/libp2p-gossipsub";
 import * as json from "multiformats/codecs/json";
@@ -15,6 +15,7 @@ import all from "it-all";
 import { str2array, array2str, hash } from "./utils.js";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { pubsubPeerDiscovery } from '@libp2p/pubsub-peer-discovery'
 import Router from "./router.js";
 import Persistency from "./persistency.js";
 
@@ -26,6 +27,7 @@ export class Node {
         this.feed = {};
         this.followers = Persistency.loadUserInfo(this, false);
         this.following = Persistency.loadUserInfo(this, true);
+        this.topics = []
 
         await this.createNode();
     }
@@ -44,8 +46,11 @@ export class Node {
                 mdns({
                     interval: 10e3,
                 }),
+                pubsubPeerDiscovery(
+                    { interval: 5000 }
+                ),
             ],
-            pubsub: gossipsub({ allowPublishToZeroPeers: true }),
+            pubsub: gossipsub({ allowPublishToZeroPeers: true, fallbackToFloodsub: true }),
         });
 
         // Start libp2p
@@ -230,12 +235,11 @@ export class Node {
 
         //share message with followers
         const topic = `feed/${hash(this.username)}`;
-        console.log(this.username, "publish:", topic)
+
         const res = await this.node.pubsub.publish(
             topic,
             str2array(JSON.stringify(messageObject))
         );
-        console.log(this.username, "publish results", res)
 
         return { success: "Posted message!" };
     };
@@ -257,14 +261,15 @@ export class Node {
             this.feed[username] = [];
             const topic = `feed/${hash(username)}`;
 
-            console.log(this.username, "event:", topic)
             this.node.pubsub.addEventListener("message", (evt) => {
-                console.log(this.username, "event received", evt)
-                const msg = JSON.parse(array2str(evt.detail.data));
-                // REVIEW - not needed if (!this.feed[username].includes(msg))
-                this.feed[username].push(msg);
+                if (this.topics.includes(evt.detail.topic)) {
+                    const msg = JSON.parse(array2str(evt.detail.data));
+                    // REVIEW - not needed if (!this.feed[username].includes(msg))
+                    this.feed[username].push(msg);
+                }
             });
-            console.log(this.username, "subscribing:", topic)
+
+            this.topics.push(topic)
             this.node.pubsub.subscribe(topic);
             this.following.push(username);
 
@@ -278,6 +283,7 @@ export class Node {
 
             if (peerId) {
                 const peerID = peerIdFromString(peerId);
+                this.node.dial(peerID)
                 // REVIEW - not needed
                 // const peerInfo = await this.node.peerRouting.findPeer(peerID);
 
@@ -330,12 +336,15 @@ export class Node {
         try {
             const data = await this.node.contentRouting.get(usernameArray);
             const content = JSON.parse(array2str(data));
-            console.log(content);
 
             const topic = `feed/${hash(username)}`;
             this.node.pubsub.unsubscribe(topic);
+            let index = this.topics.indexOf(topic);
+            if (index !== -1) {
+                this.topics.splice(index, 1);
+            }
 
-            const index = this.following.indexOf(username);
+            index = this.following.indexOf(username);
             if (index == -1) return { error: `Not subscribed to ${username}` };
             this.following.splice(index, 1);
 
@@ -607,6 +616,8 @@ export class Node {
     };
 
     listUsers = async () => {
+        console.log(this.username, "topics", this.node.pubsub.getTopics())
+
         const key = str2array("users");
         let usernames = [];
         // TODO add try catch
