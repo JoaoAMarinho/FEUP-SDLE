@@ -88,7 +88,18 @@ export default function Login() {
 
     useEffect(() => {
         const port = sessionStorage.getItem("port");
-        if (port) setPort(port);
+        if (port && port != 3001) {
+            api.post("logout/", port)
+                .then((_) => {
+                    sessionStorage.removeItem("port");
+                    window.location.reload(false);
+                })
+                .catch((err) => {
+                    console.log("Erro logout:", err);
+                    sessionStorage.removeItem("port");
+                    window.location.reload(false);
+                });
+        }
     }, [isLoading]);
 
     return (
