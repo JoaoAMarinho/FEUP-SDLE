@@ -153,7 +153,7 @@ export default function Feed() {
                                     "id " + post.username + post.date.toString()
                                 }
                             >
-                                <div className="card bg-dark text-white mt-3">
+                                <div className="card bg-transparent text-white mt-3">
                                     <div className="card-body">
                                         <div className="d-flex flex-direction-row align-items-center">
                                             <h5

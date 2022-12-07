@@ -42,7 +42,7 @@ export default function Login() {
                 const newPort = res.data.port;
                 sessionStorage.setItem("port", newPort);
                 setIsLoading(false);
-                navigate("/feed");
+                navigate("/profile");
             })
             .catch((err) => {
                 setIsLoading(false);

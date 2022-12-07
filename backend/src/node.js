@@ -28,6 +28,7 @@ export class Node {
         this.followers = [];
         this.following = Persistency.loadUserInfo(this.username, true);
         this.topics = [];
+        this.started = false;
 
         await this.createNode();
     }
@@ -67,7 +68,7 @@ export class Node {
             this.node.addEventListener("peer:discovery", this.setInfo);
         }
 
-        // Set route to receive follow requests
+        // Set route to receive follow requests<
         this.handleFollow();
 
         // Set route to receive unfollow requests
@@ -100,12 +101,16 @@ export class Node {
             key,
             str2array(JSON.stringify(data))
         );
-        console.log(`User: '${this.username}' set info dht`);
 
         this.node.removeEventListener("peer:discovery", this.setInfo);
 
-        this.sendPostsToFollowers();
-        this.subscribeFollowings();
+        if(!this.started){
+            this.started = true;
+            console.log(`User '${this.username}' set info dht`);
+            this.sendPostsToFollowers();
+            this.subscribeFollowing();
+        }
+
     };
 
     sharePort = async (evt) => {
@@ -137,10 +142,10 @@ export class Node {
         }
     };
 
-    subscribeFollowings = async () => {
+    subscribeFollowing = async () => {
         for (const username of this.following) {
             const usernameArray = str2array(username);
-            console.log(username);
+
             let data = {};
             try {
                 data = await this.node.contentRouting.get(usernameArray);
@@ -152,8 +157,11 @@ export class Node {
 
                 this.subscribe(username);
                 this.handleReceivePosts(username, cid);
-
-                if (data.peerId) this.sendFollow(data.peerId, username);
+                
+                if (data.peerId) {
+                    const peerID = peerIdFromString(data.peerId);
+                    this.sendFollow(peerID, username);
+                }
                 else this.requestPostsToProviders(cid, username);
             } catch (err) {
                 console.log(err);
@@ -498,28 +506,23 @@ export class Node {
     };
 
     handleReceivePosts = async (username, cid) => {
-        try {
-            this.node.handle([`/posts/${hash(username)}`], (data) => {
-                pipe(data.stream, async (source) => {
-                    for await (const msg of source) {
-                        const posts = JSON.parse(
-                            uint8ArrayToString(msg.subarray())
-                        );
+        this.node.handle([`/posts/${hash(username)}`], (data) => {
+            pipe(data.stream, async (source) => {
+                for await (const msg of source) {
+                    const posts = JSON.parse(
+                        uint8ArrayToString(msg.subarray())
+                    );
+                    
+                    console.log(`${username} received posts:`, posts);
+                    this.feed[username] = posts;
 
-                        this.feed[username] = posts;
-
-                        this.providePosts(cid);
-                        this.handleProvideFollowingPosts(username);
-                    }
-                }).finally(() => {
-                    data.stream.close();
-                    // this.node.unhandle([`/posts/${hash(username)}`]);
-                });
+                    this.providePosts(cid);
+                    this.handleProvideFollowingPosts(username);
+                }
+            }).finally(() => {
+                data.stream.close();
             });
-        } catch (err) {
-            console.log(err);
-            console.log(err.code);
-        }
+        }).catch((_) => {/* Do nothing */});
     };
 
     sendRequestPosts = async (peerId, username) => {
@@ -538,25 +541,26 @@ export class Node {
     };
 
     handleProvideFollowingPosts = async (username) => {
-        this.node.handle([`/request_posts/${hash(username)}`], (data) => {
-            pipe(data.stream, async (source) => {
-                for await (const msg of source) {
-                    const content = JSON.parse(
-                        uint8ArrayToString(msg.subarray())
-                    );
-                    console.log(
-                        `from: ${data.stream.stat.protocol}, msg: ${content}`
-                    );
-                    await this.shareFollowingPosts(
-                        data.connection.remotePeer,
-                        username
-                    );
-                    console.log(`${this.username} sending ${username} posts`);
-                }
-            }).finally(() => {
-                data.stream.close();
-            });
-        });
+            this.node.handle([`/request_posts/${hash(username)}`], (data) => {
+                pipe(data.stream, async (source) => {
+                    for await (const msg of source) {
+                        const content = JSON.parse(
+                            uint8ArrayToString(msg.subarray())
+                        );
+                        console.log(
+                            `from: ${data.stream.stat.protocol}, msg: ${content}`
+                        );
+                        await this.shareFollowingPosts(
+                            data.connection.remotePeer,
+                            username
+                        );
+                        console.log(`${this.username} sending ${username} posts`);
+                    }
+                })
+                .finally(() => {
+                    data.stream.close();
+                });
+            }).catch((_) => {/* Do nothing */});
     };
 
     sendFollow = async (peerId, username) => {
@@ -671,7 +675,7 @@ export class Node {
                 `/posts/${hash(this.username)}`,
             ]);
             pipe([uint8ArrayFromString(JSON.stringify(this.timeline))], stream);
-            console.log(`${this.username} sharing posts`);
+            console.log(`User: '${this.username}' sharing posts`);
         } catch (err) {
             console.log("Error sharing posts.", err);
         }
