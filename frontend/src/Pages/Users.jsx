@@ -7,7 +7,6 @@ import api from "../Utils/api";
 export default function Users() {
     const port = sessionStorage.getItem("port");
     const [users, setUsers] = useState([]);
-    const [changes, setChanges] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchUsers = () => {
@@ -32,7 +31,7 @@ export default function Users() {
         api.post("follow/", port, { username })
             .then((res) => {
                 console.log("Response:", res.data);
-                setChanges(!changes);
+                fetchUsers();
             })
             .catch((err) => {
                 console.log("Error following user:", err);
@@ -45,7 +44,7 @@ export default function Users() {
         api.post("unfollow/", port, { username })
             .then((res) => {
                 console.log("Response:", res.data);
-                setChanges(!changes);
+                fetchUsers();
             })
             .catch((err) => {
                 console.log("Error unfollowing user:", err);
@@ -63,7 +62,7 @@ export default function Users() {
 
     useEffect(() => {
         fetchUsers();
-    }, [changes]);
+    }, []);
 
     return (
         <>
@@ -73,7 +72,7 @@ export default function Users() {
                 <div className="row">
                     {users && users.map((user) => {
                         return (
-                            <UserCard user={user} handleClick={handleClick } />
+                            <UserCard key={user.username} user={user} handleClick={handleClick} />
                         );
                     })}
                 </div>

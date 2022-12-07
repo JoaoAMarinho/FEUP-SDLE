@@ -11,22 +11,6 @@ export default function Feed() {
     const [feed, setFeed] = useState([]);
     const [post, setPost] = useState("");
 
-    const fetchFeed = () => {
-        api.get("feed/", port)
-            .then((res) => {
-                console.log(res.data)
-                console.log("Feed response:", res.data.feed);
-                setFeed(res.data.feed ? res.data.feed : []);
-            })
-            .catch((err) => {
-                if (err.code === "ERR_NETWORK"){
-                    sessionStorage.removeItem("port");
-                    navigate("/login");
-                }
-                console.log("Error fetching feed:", err);
-            });
-    };
-
     const getTimeDiference = (currDate, date) => {
         const secondDiff = (currDate - date) / 1000;
         const minuteDiff = secondDiff / 60;
@@ -56,6 +40,27 @@ export default function Feed() {
         return "Just now";
     };
 
+    const fetchFeed = () => {
+        api.get("feed/", port)
+            .then((res) => {
+                console.log("Feed response:", res.data.feed);
+
+                const date = Date.now();
+                const newFeed = res.data.feed.map((post) => {
+                    post.date = getTimeDiference(date, post.date);
+                    return post;
+                });
+                setFeed(newFeed);
+            })
+            .catch((err) => {
+                if (err.code === "ERR_NETWORK"){
+                    sessionStorage.removeItem("port");
+                    navigate("/login");
+                }
+                console.log("Error fetching feed:", err);
+            });
+    };
+
     const handleDeletion = () => {
         setPost("");
     };
@@ -81,7 +86,7 @@ export default function Feed() {
         const port = sessionStorage.getItem("port");
         if (port) setPort(port);
         else navigate("/login");
-
+        console.log("oi");
         fetchFeed();
     }, [port]);
 
@@ -143,14 +148,12 @@ export default function Feed() {
                         style={{ height: "3px", backgroundColor: "white" }}
                         className="border border-0"
                     />
-                    {feed.map((post) => {
-                        const date = Date.now();
-
+                    {feed.map((post, idx) => {
                         return (
                             <div
                                 className="row"
                                 key={
-                                    "id " + post.username + post.date.toString()
+                                    "id "+ idx
                                 }
                             >
                                 <div className="card bg-transparent text-white mt-3">
@@ -163,10 +166,7 @@ export default function Feed() {
                                                 {post.username}
                                             </h5>
                                             <small className="card-subtitle text-muted">
-                                                {getTimeDiference(
-                                                    date,
-                                                    post.date
-                                                )}
+                                                {post.date}
                                             </small>
                                         </div>
                                         <p className="card-text mt-2">
