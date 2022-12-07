@@ -22,7 +22,7 @@ export default class Router {
         return res.status(response.error ? 400 : 200).json(response);
     }
 
-    static async logoutHandler(node, req, res) {
+    static async logoutHandler(node, _, res) {
         const response = await node.logout();
         console.log("Logout:", response);
 

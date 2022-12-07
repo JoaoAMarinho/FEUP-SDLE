@@ -27,7 +27,7 @@ export default class Persistency {
         return JSON.parse(fs.readFileSync(postsFile));
     }
 
-    static loadUserInfo(node, following) {
+    static loadUserInfo(username, following) {
         console.log("Loading user info");
 
         const type = following ? "following" : "followers";
@@ -37,7 +37,7 @@ export default class Persistency {
             fs.mkdirSync(dir);
             return [];
         }
-        dir += `/${node.username}`;
+        dir += `/${username}`;
 
         const file = `${dir}/${type}.txt`;
 
@@ -76,7 +76,7 @@ export default class Persistency {
             fs.writeFileSync(followersFile, JSON.stringify("[]"));
     }
 
-    static updateFollowing(username, followingUser, follow = true) {
+    static updateFollowing(username, following) {
         console.log("Update followings");
 
         let dir = "./users";
@@ -90,21 +90,10 @@ export default class Persistency {
         }
 
         const followingFile = `${dir}/following.txt`;
-        let following = [];
-        if (fs.existsSync(followingFile))
-            following = JSON.parse(fs.readFileSync(followingFile));
-
-        if (follow) {
-            following.push(followingUser);
-        } else {
-            const userIndex = following.indexOf(followingUser);
-            if (userIndex != -1) following.splice(userIndex, 1);
-        }
-
         fs.writeFileSync(followingFile, JSON.stringify(following));
     }
 
-    static updateFollowers(username, followerUser, follow = true) {
+    static updateFollowers(username, followers) {
         console.log("Update followers");
 
         let dir = "./users";
@@ -118,17 +107,6 @@ export default class Persistency {
         }
 
         const followersFile = `${dir}/followers.txt`;
-        let followers = [];
-        if (fs.existsSync(followersFile))
-            followers = JSON.parse(fs.readFileSync(followersFile));
-
-        if (follow) {
-            followers.push(followerUser);
-        } else {
-            const userIndex = followers.indexOf(followerUser);
-            if (userIndex != -1) followers.splice(userIndex, 1);
-        }
-
         fs.writeFileSync(followersFile, JSON.stringify(followers));
     }
 

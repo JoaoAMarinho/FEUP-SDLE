@@ -10,7 +10,6 @@ export default function Feed() {
     const [port, setPort] = useState(sessionStorage.getItem("port"));
     const [feed, setFeed] = useState([]);
     const [post, setPost] = useState("");
-    const date = Date.now();
 
     const fetchFeed = () => {
         api.get("feed/", port)
@@ -145,6 +144,8 @@ export default function Feed() {
                         className="border border-0"
                     />
                     {feed.map((post) => {
+                        const date = Date.now();
+
                         return (
                             <div
                                 className="row"
