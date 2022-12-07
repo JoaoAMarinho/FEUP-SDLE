@@ -7,7 +7,7 @@ import { AiFillDelete } from "react-icons/ai";
 
 export default function Feed() {
     const navigate = useNavigate();
-    const [port, setPort] = useState(sessionStorage.getItem("port"));
+    const port = sessionStorage.getItem("port");
     const [feed, setFeed] = useState([]);
     const [post, setPost] = useState("");
 
@@ -41,6 +41,8 @@ export default function Feed() {
     };
 
     const fetchFeed = () => {
+        if (port == 3001) return;
+
         api.get("feed/", port)
             .then((res) => {
                 console.log("Feed response:", res.data.feed);
@@ -83,12 +85,8 @@ export default function Feed() {
     };
 
     useEffect(() => {
-        const port = sessionStorage.getItem("port");
-        if (port) setPort(port);
-        else navigate("/login");
-        console.log("oi");
         fetchFeed();
-    }, [port]);
+    }, []);
 
     return (
         <>

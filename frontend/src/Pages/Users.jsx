@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import UserCard from "../Components/UserCard";
 import NavBar from "../Components/Navbar";
+import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../Components/LoadingSpinner";
 import api from "../Utils/api";
 
 export default function Users() {
+    const navigate = useNavigate();
     const port = sessionStorage.getItem("port");
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -61,6 +63,10 @@ export default function Users() {
     };
 
     useEffect(() => {
+        if (!port || port == 3001) {
+            navigate("/login");
+        }
+
         fetchUsers();
     }, []);
 
