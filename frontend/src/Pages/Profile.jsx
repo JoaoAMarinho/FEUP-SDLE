@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
 import NavBar from "../Components/Navbar";
+import { useNavigate } from "react-router-dom";
 import api from "../Utils/api";
+import LoadingSpinner from "../Components/LoadingSpinner";
 
 export default function Users() {
+  const navigate = useNavigate();
   const port = sessionStorage.getItem("port");
+  const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState({
     username: "",
     following: [],
@@ -46,18 +50,27 @@ export default function Users() {
       .then((res) => {
         console.log("Response:", res.data);
         setUser(res.data.user);
+        setIsLoading(false);
       })
       .catch((err) => {
+        console.log("Error fetching feed:", err);
+        setIsLoading(false);
         console.log("Error fetching feed:", err);
       });
   };
 
   useEffect(() => {
+    if (!port || port == 3001) {
+      navigate("/login");
+    }
+    
     fetchProfile();
+    
   }, []);
 
   return (
     <>
+      {isLoading && <LoadingSpinner />}
       <NavBar />
       <div className="container d-flex flex-column align-items-center mt-5">
         <div className="row col-sm-7 col-lg-5 col-10">
@@ -100,7 +113,7 @@ export default function Users() {
                 className="row"
                 key={"id " + post.username + post.date.toString()}
               >
-                <div className="card bg-dark text-white mt-3">
+                <div className="card bg-transparent text-white mt-3">
                   <div className="card-body">
                     <div className="d-flex flex-direction-row align-items-center">
                       <h5
