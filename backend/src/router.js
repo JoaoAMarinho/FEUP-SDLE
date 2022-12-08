@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import Persistency from "./persistency.js";
 
 export default class Router {
   // REQUEST HANDLERS
@@ -83,7 +84,7 @@ export default class Router {
         username: node.username,
         followers: node.followers,
         following: node.following,
-        timeline: node.timeline,
+        timeline: node.timeline.sort((v1, v2) => v2.date - v1.date),
       };
 
       console.log("Profile:", user);
@@ -92,6 +93,23 @@ export default class Router {
       });
     }
     return res.status(400).json({ error: "Invalid port" });
+  }
+
+  static async getFeedOfflineHandler(_, res) {
+    const feed = Persistency.getOfflinePosts();
+    
+    return res.status(200).json({
+      feed: feed.sort((v1, v2) => v2.date - v1.date),
+    });
+  }
+
+  static async postOfflineHandler(req, res) {
+    const { message } = req.body;
+
+    const response = Persistency.saveOfflinePost(message);
+    console.log("Post:", response);
+
+    return res.status(200).json(response);
   }
 
   // ROUTES
@@ -106,11 +124,9 @@ export default class Router {
       await this.logoutHandler(node, req, res);
       node.app.close();
     });
-
     app.post("/follow", (req, res) => {
       this.followHandler(node, req, res);
     });
-
     app.post("/unfollow", (req, res) => {
       this.unfollowHandler(node, req, res);
     });
@@ -128,6 +144,18 @@ export default class Router {
     });
   }
 
+  static setupOfflineRoutes(app) {
+    app.get("/offline", (req, res) => {
+      this.getFeedOfflineHandler(req, res);
+    });
+    app.post("/offline", (req, res) => {
+      this.postOfflineHandler(req, res);
+    });
+    app.delete("/offline", (req, res) => {
+      this.deleteOfflineHandler(req, res);
+    });
+  }
+
   static createPort(node, port = 0) {
     const app = express();
     app.use(cors());
@@ -141,6 +169,8 @@ export default class Router {
     node.app = backend;
 
     this.setupRoutes(node, app);
+
+    if (port !== 0) this.setupOfflineRoutes(app);
 
     return backend.address().port;
   }

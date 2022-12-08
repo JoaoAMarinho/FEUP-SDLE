@@ -152,12 +152,19 @@ export default function Login() {
           </div>
           <MessageBox messages={messages} setMessages={setMessages} />
           <div className="form-group mt-4 d-flex justify-content-between align-items-center">
-            <span>
-              Do not have an account yet?{" "}
-              <a href="/register" style={{ color: "#1D9BF0" }}>
-                Register
-              </a>
-            </span>
+            <div>
+              <span>
+                Do not have an account yet?{" "}
+                <a href="/register" style={{ color: "#1D9BF0" }}>
+                  Register
+                </a>
+              </span>
+              <p>
+                <a href="/feed" style={{ color: "#1D9BF0" }}>
+                  Enter as a Guest
+                </a>
+              </p>
+            </div>
             <button
               type="submit"
               className="btn btn-primary rounded-pill px-sm-5 px-3 py-2 ms-2 ms-sm-0"

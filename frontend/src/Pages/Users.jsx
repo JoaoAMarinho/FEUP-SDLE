@@ -67,6 +67,7 @@ export default function Users() {
   useEffect(() => {
     if (!port || port === 3001) {
       navigate("/login");
+      return;
     }
 
     fetchUsers();

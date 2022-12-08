@@ -23,7 +23,7 @@ export class Node {
   async init(port, username = "default") {
     this.port = await Router.createPort(this, port);
     this.username = username;
-    this.timeline = Persistency.loadTimeline(this);
+    this.timeline = Persistency.loadTimeline(username);
     this.feed = {};
     this.followers = [];
     this.following = Persistency.loadUserInfo(this.username, true);

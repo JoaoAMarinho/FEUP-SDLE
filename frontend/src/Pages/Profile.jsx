@@ -52,15 +52,16 @@ export default function Users() {
         setIsLoading(false);
       })
       .catch((err) => {
-        console.log("Error fetching feed:", err);
         setIsLoading(false);
-        console.log("Error fetching feed:", err);
+        sessionStorage.removeItem("port");
+        navigate("/login");
       });
   };
 
   useEffect(() => {
     if (!port || port === 3001) {
       navigate("/login");
+      return;
     }
 
     fetchProfile();
