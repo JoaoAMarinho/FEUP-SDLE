@@ -83,18 +83,13 @@ export default function Users() {
               >
                 {user.username}
               </h5>
-              <div className="d-flex justify-content-between mt-1 ms-3 me-3">
-                <small className="card-subtitle text-muted">
-                  joined may 2016
+              <div className="d-flex flex-wrap justify-content-end me-3">
+                <small className="card-subtitle text-muted ms-2">
+                  <b>{user.followers.length}</b> followers
                 </small>
-                <div className="d-flex flex-wrap justify-content-end">
-                  <small className="card-subtitle text-muted ms-2">
-                    <b>{user.followers.length}</b> followers
-                  </small>
-                  <small className="card-subtitle text-muted ms-2">
-                    <b>{user.following.length}</b> following
-                  </small>
-                </div>
+                <small className="card-subtitle text-muted ms-2">
+                  <b>{user.following.length}</b> following
+                </small>
               </div>
             </div>
           </div>

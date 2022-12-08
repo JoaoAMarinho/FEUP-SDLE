@@ -43,26 +43,26 @@ export default function Feed() {
     if (!port) {
       // Read offline posts
       api
-      .get("offline/", 3001)
-      .then((res) => {
-        console.log("Offline feed response:", res.data.feed);
+        .get("offline/", 3001)
+        .then((res) => {
+          console.log("Offline feed response:", res.data.feed);
 
-        const date = Date.now();
-        const newFeed = res.data.feed.map((post) => {
-          post.date = getTimeDiference(date, post.date);
-          return post;
+          const date = Date.now();
+          const newFeed = res.data.feed.map((post) => {
+            post.date = getTimeDiference(date, post.date);
+            return post;
+          });
+          setFeed(newFeed);
+        })
+        .catch((err) => {
+          if (err.code === "ERR_NETWORK") {
+            sessionStorage.removeItem("port");
+            navigate("/login");
+          }
+          console.log("Error fetching feed:", err);
         });
-        setFeed(newFeed);
-      })
-      .catch((err) => {
-        if (err.code === "ERR_NETWORK") {
-          sessionStorage.removeItem("port");
-          navigate("/login");
-        }
-        console.log("Error fetching feed:", err);
-      });
       return;
-    }  
+    }
 
     api
       .get("feed/", port)
@@ -97,15 +97,15 @@ export default function Feed() {
 
     if (!port) {
       api
-      .post("offline/", 3001, { message: post })
-      .then((res) => {
-        console.log("Post response", res.data);
-        setPost("");
-        fetchFeed();
-      })
-      .catch((err) => {
-        console.log("Post error:", err);
-      });
+        .post("offline/", 3001, { message: post })
+        .then((res) => {
+          console.log("Post response", res.data);
+          setPost("");
+          fetchFeed();
+        })
+        .catch((err) => {
+          console.log("Post error:", err);
+        });
       return;
     }
 

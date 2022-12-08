@@ -97,7 +97,7 @@ export default class Router {
 
   static async getFeedOfflineHandler(_, res) {
     const feed = Persistency.getOfflinePosts();
-    
+
     return res.status(200).json({
       feed: feed.sort((v1, v2) => v2.date - v1.date),
     });
