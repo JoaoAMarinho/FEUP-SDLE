@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from "react";
 
 export default function Footer() {
-  const [port, setPort] = useState(sessionStorage.getItem("port") || "");
+  const [port, setPort] = useState(sessionStorage.getItem("port") || "None");
 
   useEffect(() => {
     const onStorage = () => {
-      console.log("on change");
       setPort(sessionStorage.getItem("port"));
       // window.removeEventListener("storage", onStorage);
     };
 
-    console.log("aqui");
     window.addEventListener("storage", onStorage);
   }, []);
 

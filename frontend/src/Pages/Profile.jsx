@@ -6,7 +6,7 @@ import LoadingSpinner from "../Components/LoadingSpinner";
 export default function Users() {
   const navigate = useNavigate();
   const port = sessionStorage.getItem("port");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState({
     username: "",
     following: [],
