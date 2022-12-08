@@ -122,4 +122,19 @@ export default class Persistency {
             JSON.stringify(timeline)
         );
     }
+
+    static appendTestFile = async (file, data) => {
+        let dir = "./tests";
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+
+        dir = dir + "/" + file
+
+        fs.appendFileSync(
+            dir,
+            data.toString() + "\n"
+        )
+
+    }
 }

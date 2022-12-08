@@ -61,11 +61,13 @@ export class Node {
         console.log("Node created!", this.node.peerId.toString());
 
         // Wait for onConnect handlers in the DHT
-        await delay(1000);
+        await delay(2000);
 
         if (this.port !== 3001) {
             this.node.addEventListener("peer:discovery", this.sharePort);
-            this.node.addEventListener("peer:discovery", this.setInfo);
+            // this.node.addEventListener("peer:discovery", this.setInfo);
+            setTimeout(this.setInfo, 1000)
+
         }
 
         // Set route to receive follow requests<
@@ -92,6 +94,7 @@ export class Node {
             data = JSON.parse(array2str(data));
         } catch (_) {
             // Did not find peers yet
+            setTimeout(this.setInfo, 1000)
             return;
         }
         data.peerId = this.node.peerId.toString();
@@ -102,7 +105,7 @@ export class Node {
             str2array(JSON.stringify(data))
         );
 
-        this.node.removeEventListener("peer:discovery", this.setInfo);
+        // this.node.removeEventListener("peer:discovery", this.setInfo);
 
         if(!this.started){
             this.started = true;
@@ -277,6 +280,8 @@ export class Node {
             return { error: "Node starting" };
         }
 
+        // Persistency.appendTestFile("singlePost",`Post: ${Date.now().toString()}`)
+
         const messageObject = {
             username: this.username,
             message: message,
@@ -362,6 +367,7 @@ export class Node {
             if (this.topics.includes(evt.detail.topic)) {
                 const msg = JSON.parse(array2str(evt.detail.data));
                 this.feed[username].push(msg);
+                // Persistency.appendTestFile("singlePost", Date.now().toString())
             }
         });
 
@@ -730,6 +736,8 @@ export class Node {
         const accounts = Persistency.loadAccounts(this);
         const accountsList = [];
 
+        if(accounts === undefined) return
+
         for (const account of accounts) {
             const usernameArray = str2array(account.username);
             // Register user + pass in DHT of user entry
@@ -751,4 +759,44 @@ export class Node {
             str2array(JSON.stringify(accountsList))
         );
     };
+
+    loginTest = async (username, password) => {
+        if (!this.node.isStarted()) {
+            return { error: "Node starting" };
+        }
+
+        password = hash(password);
+
+        let data = {};
+        try {
+            data = await this.node.contentRouting.get(str2array(username));
+            data = JSON.parse(array2str(data));
+
+            if (data.password !== password) {
+                return { error: "Invalid password!" };
+            }
+        } catch (_) {
+            return { error: "User does not exist!" };
+        }
+
+        const portPromise = this.handleReceivePort(username);
+        let createNode = true;
+        // If peer already connected try to establish connection with node
+        const { peerId } = data;
+
+        if (peerId) {
+            try {
+                const peerID = peerIdFromString(peerId);
+                this.node.dial(peerID);
+                createNode = !(await this.requestPort(peerID, username));
+            } catch (_) {
+                console.log("Could not contact peer", peerId);
+            }
+        }
+
+        const node = new Node();
+        node.init(0, username);
+        return node;
+    };
+
 }
