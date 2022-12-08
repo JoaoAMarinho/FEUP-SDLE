@@ -10,7 +10,7 @@ import Profile from "./Pages/Profile";
 import Users from "./Pages/Users";
 
 function App() {
-  const [port, setPort] = useState(sessionStorage.getItem("port") || "");
+  const [port, setPort] = useState(sessionStorage.getItem("port"));
 
   const onChangePort = () => {
     setPort(sessionStorage.getItem("port"));
