@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 
@@ -10,13 +10,22 @@ import Profile from "./Pages/Profile";
 import Users from "./Pages/Users";
 
 function App() {
+  const [port, setPort] = useState(sessionStorage.getItem("port") || "");
+
+  const onChangePort = () => {
+    setPort(sessionStorage.getItem("port"));
+  };
+
   return (
     <div className="App d-flex flex-column position-relative">
       <BrowserRouter>
-        <Layout>
+        <Layout port={port} onChangePort={onChangePort}>
           <Routes>
             <Route path="/" element={<Navigate to="/login" />} />
-            <Route path="/login" element={<Login />} />
+            <Route
+              path="/login"
+              element={<Login onChangePort={onChangePort} />}
+            />
             <Route path="/register" element={<Register />} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/profile" element={<Profile />} />

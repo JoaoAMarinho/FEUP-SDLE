@@ -22,17 +22,19 @@ export default class Persistency {
     const posts = [];
     const dir = "./posts";
     if (!fs.existsSync(dir)) return posts;
-    
+
     let postsFile = `${dir}/${hash(username)}.txt`;
-    if (fs.existsSync(postsFile)) 
+    if (fs.existsSync(postsFile))
       posts.push(...JSON.parse(fs.readFileSync(postsFile)));
-    
+
     postsFile = `${dir}/offline.txt`;
-    if (fs.existsSync(postsFile)){
-      const offlinePosts = JSON.parse(fs.readFileSync(postsFile)).map((post) => {
-        post.username = username;
-        return post;
-      });
+    if (fs.existsSync(postsFile)) {
+      const offlinePosts = JSON.parse(fs.readFileSync(postsFile)).map(
+        (post) => {
+          post.username = username;
+          return post;
+        }
+      );
       posts.push(...offlinePosts);
       this.removeOfflinePosts();
     }
@@ -48,7 +50,7 @@ export default class Persistency {
 
     let dir = "./users";
     if (!fs.existsSync(dir)) return [];
-    
+
     dir += `/${username}`;
     if (!fs.existsSync(dir)) return [];
 
@@ -63,10 +65,10 @@ export default class Persistency {
 
     let dir = "./users";
     if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-  
+
     const usersFile = `${dir}/accounts.txt`;
     let users = [];
-    if (fs.existsSync(usersFile)) 
+    if (fs.existsSync(usersFile))
       users = JSON.parse(fs.readFileSync(usersFile));
     users.push(user);
     fs.writeFileSync(usersFile, JSON.stringify(users));
@@ -105,7 +107,7 @@ export default class Persistency {
 
     dir += `/${username}`;
     if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    
+
     const followersFile = `${dir}/followers.txt`;
     fs.writeFileSync(followersFile, JSON.stringify(followers));
   }
@@ -122,14 +124,14 @@ export default class Persistency {
   static getOfflinePosts() {
     let dir = "./posts";
     if (!fs.existsSync(dir)) return [];
-    
+
     const offlinePostsFile = `${dir}/offline.txt`;
     if (fs.existsSync(offlinePostsFile))
       return JSON.parse(fs.readFileSync(offlinePostsFile));
-    
+
     return [];
   }
-  
+
   static saveOfflinePost(post) {
     let dir = "./posts";
     if (!fs.existsSync(dir)) fs.mkdirSync(dir);
@@ -144,14 +146,25 @@ export default class Persistency {
       message: post,
       date: Date.now(),
     };
-  
+
     offlinePosts.push(offlinePost);
     fs.writeFileSync(offlinePostsFile, JSON.stringify(offlinePosts));
     return { success: "Posted message!" };
   }
-  
+
   static removeOfflinePosts() {
     const offlinePostsFile = "./posts/offline.txt";
     fs.unlinkSync(offlinePostsFile);
   }
+
+  static appendTestFile = async (file, data) => {
+    let dir = "./tests";
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir);
+    }
+
+    dir = dir + "/" + file;
+
+    fs.appendFileSync(dir, data.toString() + "\n");
+  };
 }

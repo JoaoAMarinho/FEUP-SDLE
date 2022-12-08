@@ -3,12 +3,12 @@ import PropTypes from "prop-types";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
-export default function Layout({ children }) {
+export default function Layout({ port, onChangePort, children }) {
   return (
     <>
-      <Navbar />
+      <Navbar onChangePort={onChangePort} />
       {children}
-      <Footer />
+      <Footer port={port} />
     </>
   );
 }

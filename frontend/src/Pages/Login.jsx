@@ -5,7 +5,7 @@ import api from "../Utils/api";
 import PiuPiu from "../Components/PiuPiu";
 import LoadingSpinner from "../Components/LoadingSpinner";
 
-export default function Login() {
+export default function Login({ onChangePort }) {
   const navigate = useNavigate();
 
   const [port, setPort] = useState(3001);
@@ -42,6 +42,7 @@ export default function Login() {
 
         const newPort = res.data.port;
         sessionStorage.setItem("port", newPort);
+        onChangePort();
         setIsLoading(false);
         navigate("/profile");
       })

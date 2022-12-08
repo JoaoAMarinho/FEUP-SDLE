@@ -9,7 +9,7 @@ import {
 import Logo from "../logo.svg";
 import api from "../Utils/api";
 
-export default function Navbar() {
+export default function Navbar({ onChangePort }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -19,6 +19,7 @@ export default function Navbar() {
       .post("logout/", sessionStorage.getItem("port"))
       .then((_) => {
         sessionStorage.removeItem("port");
+        onChangePort();
         navigate("/login");
       })
       .catch((err) => {
