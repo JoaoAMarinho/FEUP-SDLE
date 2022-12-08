@@ -74,8 +74,8 @@ export default function Users() {
 
   return (
     <>
+      {isLoading && <LoadingSpinner />}
       <div className="container mt-5">
-        {isLoading && <LoadingSpinner />}
         <div className="row">
           {users &&
             users.map((user) => {

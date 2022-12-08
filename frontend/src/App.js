@@ -19,7 +19,7 @@ function App() {
   return (
     <div className="App d-flex flex-column position-relative">
       <BrowserRouter>
-        <Layout port={port}>
+        <Layout port={port} onChangePort={onChangePort}>
           <Routes>
             <Route path="/" element={<Navigate to="/login" />} />
             <Route
