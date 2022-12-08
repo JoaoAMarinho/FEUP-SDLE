@@ -1,7 +1,8 @@
 import React from "react";
-import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import "./App.css";
 
+import Layout from "./Components/Layout";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
 import Feed from "./Pages/Feed";
@@ -12,15 +13,17 @@ function App() {
   return (
     <div className="App d-flex flex-column position-relative">
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/feed" element={<Feed />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="*" element={<Navigate to="/profile" />} />
-        </Routes>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/feed" element={<Feed />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="*" element={<Navigate to="/profile" />} />
+          </Routes>
+        </Layout>
       </BrowserRouter>
     </div>
   );
