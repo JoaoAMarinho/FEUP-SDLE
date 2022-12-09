@@ -66,7 +66,7 @@ export class Node {
     if (this.port !== 3001) {
       this.node.addEventListener("peer:discovery", this.sharePort);
       // this.node.addEventListener("peer:discovery", this.setInfo);
-      setTimeout(this.setInfo, 2000);
+      await setTimeout(this.setInfo, 2000);
     }
 
     // Set route to receive follow requests<
