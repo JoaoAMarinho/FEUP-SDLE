@@ -28,7 +28,6 @@ export class Node {
     this.followers = [];
     this.following = Persistency.loadUserInfo(this.username, true);
     this.topics = [];
-    this.started = false;
 
     await this.createNode();
   }
@@ -65,8 +64,7 @@ export class Node {
 
     if (this.port !== 3001) {
       this.node.addEventListener("peer:discovery", this.sharePort);
-      // this.node.addEventListener("peer:discovery", this.setInfo);
-      await setTimeout(this.setInfo, 2000);
+      setTimeout(this.setInfo, 2000);
     }
 
     // Set route to receive follow requests<
@@ -101,14 +99,9 @@ export class Node {
 
     await this.node.contentRouting.put(key, str2array(JSON.stringify(data)));
 
-    this.node.removeEventListener("peer:discovery", this.setInfo);
-
-    if (!this.started) {
-      this.started = true;
-      console.log(`User '${this.username}' set info dht`);
-      this.sendPostsToFollowers();
-      this.subscribeFollowing();
-    }
+    console.log(`User '${this.username}' set info dht`);
+    this.sendPostsToFollowers();
+    this.subscribeFollowing();
   };
 
   sharePort = async (evt) => {
