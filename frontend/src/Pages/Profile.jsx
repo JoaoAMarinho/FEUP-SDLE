@@ -51,7 +51,7 @@ export default function Users() {
         setUser(res.data.user);
         setIsLoading(false);
       })
-      .catch((err) => {
+      .catch((_) => {
         setIsLoading(false);
         sessionStorage.removeItem("port");
         navigate("/login");

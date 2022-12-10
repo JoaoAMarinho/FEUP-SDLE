@@ -452,10 +452,6 @@ export class Node {
           this.node.unhandle([`/port/${hash(username)}`]);
         });
       });
-      // TODO handle error of handler already defined
-      // .catch((err) => {
-      //   console.log("Handel error of handler already defined")
-      // })
     });
   };
 
