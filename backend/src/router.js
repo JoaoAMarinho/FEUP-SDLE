@@ -79,7 +79,6 @@ export default class Router {
 
   static async profileHandler(node, _, res) {
     if (node.port !== 3001) {
-      console.log("profile");
       const user = {
         username: node.username,
         followers: node.followers,

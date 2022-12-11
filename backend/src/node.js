@@ -314,7 +314,6 @@ export class Node {
         this.sendFollow(peerID, username);
       } else {
         console.log("User not online");
-        console.log(content);
         if (!content.followers.includes(this.username)) {
           // Update DHT
           content.followers.push(this.username);
@@ -528,7 +527,6 @@ export class Node {
         pipe(data.stream, async (source) => {
           for await (const msg of source) {
             const content = JSON.parse(uint8ArrayToString(msg.subarray()));
-            console.log(`from: ${data.stream.stat.protocol}, msg: ${content}`);
             await this.shareFollowingPosts(
               data.connection.remotePeer,
               username
@@ -670,11 +668,9 @@ export class Node {
   };
 
   listUsers = async () => {
-    console.log(this.username, "topics", this.node.pubsub.getTopics());
 
     const key = str2array("users");
     let usernames = [];
-    // TODO add try catch
     try {
       usernames = await this.node.contentRouting.get(key);
       usernames = JSON.parse(array2str(usernames));
