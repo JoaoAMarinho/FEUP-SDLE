@@ -4,7 +4,7 @@ import seaborn as sns
 import numpy as np
 from scipy.optimize import curve_fit
 
-f = open("data.txt", "r")
+f = open("./data.txt", "r")
 data = f.read()
 data = data.split("Post: ")
 data = list(filter(lambda val: val != "", data))
@@ -52,5 +52,3 @@ ax.set_ylim(0, 3000)
 ax.set_xlabel('Number of nodes')
 ax.legend()
 plt.show()
-
-
